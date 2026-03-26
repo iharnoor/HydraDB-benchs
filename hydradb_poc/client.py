@@ -66,15 +66,15 @@ class HydraDBClient:
 
     # ── Memory Ingestion ─────────────────────────────────────
 
-    def add_memories(self, memories: list[dict], sub_tenant_id: str = "") -> dict:
+    def add_memories(self, memories: list[dict], sub_tenant_id: str = "", infer: bool = True) -> dict:
         """
-        Add memory items. Each item can have:
-        - text: raw text to index
-        - title: display title
-        - source_id: optional unique ID (auto-generated if omitted)
-
-        Returns source_ids for tracking processing status.
+        Add memory items via /memories/add_memory.
+        Each item should have 'text' and optionally 'infer'.
+        infer=True extracts preferences, entities, and graph edges.
         """
+        for mem in memories:
+            if "infer" not in mem:
+                mem["infer"] = infer
         payload = {
             "memories": memories,
             "tenant_id": self.tenant_id,
@@ -83,9 +83,9 @@ class HydraDBClient:
             payload["sub_tenant_id"] = sub_tenant_id
         return self._post("/memories/add_memory", payload)
 
-    def add_memory(self, text: str, title: str = "") -> dict:
-        """Convenience: add a single memory item."""
-        item = {"text": text}
+    def add_memory(self, text: str, title: str = "", infer: bool = True) -> dict:
+        """Add a single memory item."""
+        item = {"text": text, "infer": infer}
         if title:
             item["title"] = title
         return self.add_memories([item])
@@ -142,7 +142,8 @@ class HydraDBClient:
     def recall_preferences(self, query: str, max_results: int = 10) -> dict:
         """
         Fast preference/memory recall.
-        Uses vector search — available immediately (no graph wait).
+        Uses hybrid search: dense + inferred + BM25.
+        Inferred embeddings require infer=True during ingestion.
         """
         return self._post("/recall/recall_preferences", {
             "tenant_id": self.tenant_id,

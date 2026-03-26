@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Why Coding Agent Couldn't Figure Out HydraDB</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --border: #2a2a3a;
+    --text: #e4e4ed;
+    --muted: #8888a0;
+    --red: #ef4444;
+    --green: #22c55e;
+    --blue: #818cf8;
+    --orange: #f97316;
+    --yellow: #fbbf24;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', -apple-system, sans-serif;
+    line-height: 1.7;
+    padding: 48px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    font-size: 2rem;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    margin-bottom: 8px;
+    color: var(--red);
+  }
+
+  h2 {
+    font-size: 1.3rem;
+    font-weight: 800;
+    margin: 40px 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+
+  h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 24px 0 8px;
+    color: var(--blue);
+  }
+
+  p, li {
+    font-size: 0.9rem;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+  .subtitle {
+    font-size: 0.95rem;
+    color: var(--muted);
+    margin-bottom: 32px;
+  }
+
+  .date {
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 32px;
+  }
+
+  /* ── Tables ─────────────────────────────────────── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0 24px;
+    font-size: 0.85rem;
+  }
+  th {
+    text-align: left;
+    padding: 10px 14px;
+    background: var(--surface);
+    color: var(--muted);
+    font-weight: 700;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-bottom: 2px solid var(--border);
+  }
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(42,42,58,0.5);
+    vertical-align: top;
+  }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .wrong { color: var(--red); font-weight: 600; }
+  .correct { color: var(--green); font-weight: 600; }
+
+  /* ── Code blocks ────────────────────────────────── */
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    background: var(--surface);
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+
+  pre {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 12px 0 20px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    line-height: 1.6;
+  }
+  pre .comment { color: var(--muted); }
+  pre .key { color: var(--blue); }
+  pre .value { color: var(--green); }
+  pre .wrong-val { color: var(--red); }
+
+  /* ── Callout boxes ──────────────────────────────── */
+  .callout {
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin: 20px 0;
+    border-left: 4px solid;
+  }
+  .callout.error {
+    background: rgba(239,68,68,0.08);
+    border-color: var(--red);
+  }
+  .callout.success {
+    background: rgba(34,197,94,0.08);
+    border-color: var(--green);
+  }
+  .callout.warning {
+    background: rgba(251,191,36,0.08);
+    border-color: var(--yellow);
+  }
+  .callout.info {
+    background: rgba(129,140,248,0.08);
+    border-color: var(--blue);
+  }
+  .callout h4 {
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .callout.error h4 { color: var(--red); }
+  .callout.success h4 { color: var(--green); }
+  .callout.warning h4 { color: var(--yellow); }
+  .callout.info h4 { color: var(--blue); }
+  .callout p { font-size: 0.85rem; margin-bottom: 4px; }
+
+  /* ── Timeline ───────────────────────────────────── */
+  .timeline {
+    position: relative;
+    padding-left: 28px;
+    margin: 16px 0 24px;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 4px;
+    bottom: 4px;
+    width: 2px;
+    background: var(--border);
+  }
+  .timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+  }
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -24px;
+    top: 6px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: var(--bg);
+  }
+  .timeline-item.error::before { border-color: var(--red); background: rgba(239,68,68,0.2); }
+  .timeline-item.fix::before { border-color: var(--green); background: rgba(34,197,94,0.2); }
+  .timeline-item.discovery::before { border-color: var(--yellow); background: rgba(251,191,36,0.2); }
+  .timeline-item .tl-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+  .timeline-item .tl-desc {
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+
+  /* ── Sections ───────────────────────────────────── */
+  .section {
+    margin-bottom: 40px;
+  }
+
+  ul { padding-left: 20px; margin: 8px 0; }
+  li { margin-bottom: 4px; }
+
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 40px 0;
+  }
+
+  .footer {
+    text-align: center;
+    padding: 32px 0;
+    border-top: 1px solid var(--border);
+    margin-top: 48px;
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+
+  @media print {
+    body { background: #0a0a0f; color: var(--text); padding: 24px; }
+    .callout { break-inside: avoid; }
+    table { break-inside: avoid; }
+    pre { break-inside: avoid; }
+    .timeline-item { break-inside: avoid; }
+    .section { break-inside: avoid; }
+  }
+
+  /* weasyprint PDF: ensure all text in code blocks is visible */
+  pre code, pre span, pre {
+    color: var(--text);
+  }
+  pre .comment { color: var(--muted); }
+  pre .key { color: var(--blue); }
+  pre .value { color: var(--green); }
+  pre .wrong-val { color: var(--red); }
+
+  /* Ensure table cell code is readable */
+  td code, th code {
+    color: var(--text);
+    background: rgba(255,255,255,0.06);
+    border-color: var(--border);
+  }
+</style>
+</head>
+<body>
+
+<h1>Why Coding Agent Couldn't Figure Out HydraDB</h1>
+<p class="subtitle">
+  A root cause analysis of API documentation mismatches that caused Claude Code
+  to misconfigure HydraDB endpoints, leading to failed ingestion and suboptimal retrieval.
+</p>
+<p class="date">March 26, 2026 &mdash; HydraDB POC Benchmark Project</p>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2>1. Executive Summary</h2>
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<div class="section">
+  <p>
+    During a benchmark project comparing HydraDB vs ChromaDB vs Mem0, Claude Code (AI coding agent)
+    repeatedly misconfigured HydraDB API calls. The root cause was <strong>documentation that doesn't match
+    the actual API</strong>. Three specific discrepancies caused cascading failures:
+  </p>
+
+  <div class="callout error">
+    <h4>The Core Problem</h4>
+    <p>The docs at <code>docs.hydradb.com/essentials/memories</code> show an API format that returns 404 when called.
+    The actual working API uses different endpoints, field names, and payload structures.</p>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th></th>
+        <th>Documentation Says</th>
+        <th>API Actually Accepts</th>
+        <th>Impact</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Endpoint</strong></td>
+        <td class="wrong"><code>/memory/add</code></td>
+        <td class="correct"><code>/memories/add_memory</code></td>
+        <td>404 Not Found</td>
+      </tr>
+      <tr>
+        <td><strong>Text field</strong></td>
+        <td class="wrong"><code>"content"</code></td>
+        <td class="correct"><code>"text"</code></td>
+        <td>422 Validation Error</td>
+      </tr>
+      <tr>
+        <td><strong>Structure</strong></td>
+        <td class="wrong">Flat object</td>
+        <td class="correct"><code>{"memories": [...]}</code> array</td>
+        <td>422 "memories field required"</td>
+      </tr>
+      <tr>
+        <td><strong>User ID</strong></td>
+        <td class="wrong">Required at top level</td>
+        <td class="correct">Optional</td>
+        <td>Minor</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2>2. The Documentation vs Reality</h2>
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<div class="section">
+  <h3>What the docs show (docs.hydradb.com/essentials/memories)</h3>
+  <pre><span class="comment"># Documentation example &mdash; DOES NOT WORK</span>
+curl -X POST <span class="wrong-val">https://api.hydradb.com/memory/add</span> \
+  -H "Authorization: Bearer &lt;API_KEY&gt;" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tenant_id": "demo",
+    "user_id": "john",
+    <span class="wrong-val">"content"</span>: "John prefers dark mode and detailed technical explanations",
+    "infer": true
+  }'</pre>
+
+  <h3>What actually works (verified by testing)</h3>
+  <pre><span class="comment"># Working API call &mdash; VERIFIED</span>
+curl -X POST <span class="value">https://api.hydradb.com/memories/add_memory</span> \
+  -H "Authorization: Bearer &lt;API_KEY&gt;" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tenant_id": "demo",
+    <span class="value">"memories"</span>: [
+      {
+        <span class="value">"text"</span>: "John prefers dark mode and detailed technical explanations",
+        "infer": true
+      }
+    ]
+  }'</pre>
+
+  <h3>Verification tests run</h3>
+  <table>
+    <thead>
+      <tr><th>Test</th><th>Endpoint</th><th>Payload Format</th><th>Result</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Test 1</td>
+        <td><code>/memories/add_memory</code></td>
+        <td>Flat with <code>content</code> + <code>infer</code></td>
+        <td class="wrong">422 &mdash; "memories field required"</td>
+      </tr>
+      <tr>
+        <td>Test 2</td>
+        <td><code>/memories/add_memory</code></td>
+        <td>Array with <code>content</code> + <code>infer</code></td>
+        <td class="wrong">422 &mdash; "text or user_assistant_pairs required"</td>
+      </tr>
+      <tr>
+        <td>Test 3</td>
+        <td><code>/memories/add_memory</code></td>
+        <td>Array with <code>text</code> + <code>infer</code></td>
+        <td class="correct">200 &mdash; "queued", infer: true</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2>3. Timeline of Errors</h2>
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<div class="section">
+  <div class="timeline">
+    <div class="timeline-item error">
+      <div class="tl-title">Stage 1: Uploaded as knowledge (PDF), not memories</div>
+      <div class="tl-desc">
+        Agent used <code>/ingestion/upload_knowledge</code> to upload relationship timeline as a PDF file.
+        Knowledge and memories are different data types in HydraDB with different search endpoints.
+      </div>
+    </div>
+    <div class="timeline-item error">
+      <div class="tl-title">Stage 2: Searched via deprecated <code>/recall/qna</code></div>
+      <div class="tl-desc">
+        Since data was uploaded as knowledge, agent used <code>/recall/qna</code> (the knowledge search endpoint).
+        This endpoint was deprecated long ago. No results returned.
+      </div>
+    </div>
+    <div class="timeline-item discovery">
+      <div class="tl-title">Stage 3: User flagged the wrong endpoint</div>
+      <div class="tl-desc">
+        HydraDB team member pointed out: "Use <code>/recall/recall_preferences</code>, the <code>/recall/qna</code>
+        endpoint was deprecated long back." Agent switched search endpoint but data was still uploaded as knowledge.
+      </div>
+    </div>
+    <div class="timeline-item fix">
+      <div class="tl-title">Stage 4: Re-ingested as memories via <code>/memories/add_memory</code></div>
+      <div class="tl-desc">
+        Changed from <code>upload_knowledge(pdf)</code> to <code>add_memories([{"text": chunk}])</code>.
+        Now <code>recall_preferences</code> found the data correctly.
+      </div>
+    </div>
+    <div class="timeline-item error">
+      <div class="tl-title">Stage 5: Tried to follow docs for <code>infer</code> flag</div>
+      <div class="tl-desc">
+        Read docs at <code>docs.hydradb.com/essentials/memories</code>. Docs showed <code>/memory/add</code>
+        with <code>"content"</code> field. Agent rewrote client to match docs. Got 404.
+      </div>
+    </div>
+    <div class="timeline-item fix">
+      <div class="tl-title">Stage 6: Brute-force tested all three formats</div>
+      <div class="tl-desc">
+        Tested flat vs array, <code>content</code> vs <code>text</code>, with and without <code>infer</code>.
+        Found that original format with <code>text</code> field + <code>infer</code> inside array items works.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2>4. Root Cause Analysis</h2>
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<div class="section">
+  <table>
+    <thead>
+      <tr><th>Decision</th><th>Why It Was Wrong</th><th>Root Cause</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Uploaded as <strong>knowledge</strong> (PDF)</td>
+        <td>The data was relationship memories/events, not reference documents. Memories are the right data type for personal timeline data.</td>
+        <td>Agent didn't understand <strong>memories vs knowledge</strong> taxonomy in HydraDB</td>
+      </tr>
+      <tr>
+        <td>Searched via <code>/recall/qna</code></td>
+        <td>This was the matching endpoint for knowledge, but it was deprecated.</td>
+        <td>No deprecation warning returned by the API &mdash; silent failure</td>
+      </tr>
+      <tr>
+        <td>Trusted docs for <code>infer</code> flag format</td>
+        <td>Docs showed <code>/memory/add</code> with <code>content</code> &mdash; doesn't exist.</td>
+        <td><strong>Documentation doesn't match the API</strong></td>
+      </tr>
+      <tr>
+        <td>Didn't know the API taxonomy</td>
+        <td>Treated HydraDB like a generic vector DB instead of learning its data model.</td>
+        <td>No OpenAPI spec or SDK with type hints to guide the agent</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2>5. The <code>infer</code> Flag &mdash; What It Actually Does</h2>
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<div class="section">
+  <p>The <code>infer</code> flag is a per-memory ingestion parameter that controls how HydraDB processes data:</p>
+
+  <table>
+    <thead>
+      <tr><th><code>infer: true</code></th><th><code>infer: false</code></th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Extracts entities (people, places, events)</td>
+        <td>Stores content as-is</td>
+      </tr>
+      <tr>
+        <td>Resolves pronouns via sliding window ("He" &rarr; "Harnoor")</td>
+        <td>No pronoun resolution</td>
+      </tr>
+      <tr>
+        <td>Builds graph edges (MENTIONED_IN, NEXT, CO_OCCURS)</td>
+        <td>No graph construction</td>
+      </tr>
+      <tr>
+        <td>Creates inferred embeddings (separate from dense + BM25)</td>
+        <td>Only dense + BM25 embeddings</td>
+      </tr>
+      <tr>
+        <td>Extracts structured preferences</td>
+        <td>No preference extraction</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout info">
+    <h4>Where <code>infer</code> goes in the payload</h4>
+    <p>Inside each memory item in the array, NOT at the top level:</p>
+  </div>
+
+  <pre>{
+  "tenant_id": "live_benchmark",
+  "memories": [
+    {
+      "text": "Katie surprised Harnoor with a birthday celebration on December 23, 2020.",
+      <span class="value">"infer": true</span>   <span class="comment">// &larr; HERE, per memory item</span>
+    }
+  ]
+}</pre>
+
+  <p>
+    During <strong>recall</strong>, HydraDB uses a weighted hybrid search across all three embedding types:
+    <code>dense + inferred + BM25</code>. Without <code>infer: true</code> at ingestion, the inferred
+    embeddings and graph edges don't exist, and retrieval quality degrades.
+  </p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2>6. Verified Working API Reference</h2>
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<div class="section">
+  <h3>Add Memories</h3>
+  <pre>POST /memories/add_memory
+
+{
+  "tenant_id": "your_tenant",
+  "memories": [
+    {"text": "memory content here", "infer": true},
+    {"text": "another memory", "infer": true}
+  ]
+}
+
+<span class="comment">// Response:</span>
+{
+  "success": true,
+  "results": [
+    {"source_id": "uuid", "status": "queued", "infer": true}
+  ]
+}</pre>
+
+  <h3>Recall Preferences</h3>
+  <pre>POST /recall/recall_preferences
+
+{
+  "tenant_id": "your_tenant",
+  "query": "What car did they buy?",
+  "max_results": 5
+}
+
+<span class="comment">// Returns ranked chunks via hybrid search (dense + inferred + BM25)</span></pre>
+
+  <h3>Other Recall Endpoints</h3>
+  <table>
+    <thead>
+      <tr><th>Endpoint</th><th>Method</th><th>Use Case</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>/recall/recall_preferences</code></td><td>Hybrid</td><td>Memory / preference recall (primary)</td></tr>
+      <tr><td><code>/recall/full_recall</code></td><td>Hybrid</td><td>Full hybrid vector + graph + BM25</td></tr>
+      <tr><td><code>/recall/boolean_recall</code></td><td>BM25</td><td>Full-text keyword search</td></tr>
+      <tr><td class="wrong"><code>/recall/qna</code></td><td class="wrong">Deprecated</td><td class="wrong">Do not use &mdash; removed</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2>7. Recommendations for HydraDB Team</h2>
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<div class="section">
+  <div class="callout warning">
+    <h4>Documentation Fixes Needed</h4>
+    <p>These are UX/documentation issues that will affect every developer and AI agent integrating HydraDB:</p>
+  </div>
+
+  <ol>
+    <li>
+      <strong>Fix the docs at <code>docs.hydradb.com/essentials/memories</code></strong><br>
+      Update endpoint from <code>/memory/add</code> to <code>/memories/add_memory</code>,
+      field from <code>content</code> to <code>text</code>, and structure from flat object to
+      <code>memories</code> array.
+    </li>
+    <li>
+      <strong>Return deprecation errors, not silent failures</strong><br>
+      If <code>/recall/qna</code> is deprecated, return a clear error message pointing users to
+      <code>/recall/recall_preferences</code>. Don't silently return empty results.
+    </li>
+    <li>
+      <strong>Document the memories vs knowledge data model</strong><br>
+      Prominently explain: "Uploaded memories? Use <code>recall_preferences</code>.
+      Uploaded knowledge files? Use <code>full_recall</code>."
+    </li>
+    <li>
+      <strong>Publish an OpenAPI spec</strong><br>
+      A machine-readable spec would let AI coding agents (and IDE autocomplete) discover the correct
+      endpoints, field names, and types automatically.
+    </li>
+    <li>
+      <strong>Surface the correct recall endpoint in ingestion responses</strong><br>
+      When a user uploads memories, the response could include:
+      <code>"recall_endpoint": "/recall/recall_preferences"</code>
+    </li>
+  </ol>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2>8. Lessons for AI Coding Agents</h2>
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<div class="section">
+  <div class="callout info">
+    <h4>What the agent should have done differently</h4>
+    <p>These patterns would have caught the issue earlier:</p>
+  </div>
+
+  <ul>
+    <li><strong>Test before trusting docs.</strong> Always make a test API call before building an entire client around documentation. Docs can be wrong.</li>
+    <li><strong>Check for OpenAPI specs first.</strong> Machine-readable specs are more reliable than prose documentation.</li>
+    <li><strong>Ask the user about data model taxonomy.</strong> "Is this memories or knowledge?" would have prevented the initial misclassification.</li>
+    <li><strong>When an endpoint returns empty results, investigate.</strong> Don't assume the data isn't there &mdash; check if you're using the wrong search endpoint.</li>
+  </ul>
+</div>
+
+
+</body>
+</html>

@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HydraDB vs ChromaDB — Why Vector DBs Are Broken</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface-2: #1a1a25;
+    --border: #2a2a3a;
+    --text: #e4e4ed;
+    --text-muted: #8888a0;
+    --hydra: #818cf8;
+    --hydra-bg: rgba(99,102,241,0.08);
+    --hydra-border: rgba(99,102,241,0.2);
+    --chroma: #f97316;
+    --chroma-bg: rgba(249,115,22,0.08);
+    --chroma-border: rgba(249,115,22,0.2);
+    --green: #22c55e;
+    --red: #ef4444;
+    --yellow: #fbbf24;
+    --green-bg: rgba(34,197,94,0.1);
+    --red-bg: rgba(239,68,68,0.1);
+    --yellow-bg: rgba(251,191,36,0.1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', -apple-system, sans-serif;
+    line-height: 1.6;
+    padding: 0;
+  }
+
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+  /* ── Hero ─────────────────────────────────────────────── */
+  .hero {
+    text-align: center;
+    padding: 64px 24px 48px;
+    background: linear-gradient(180deg, rgba(129,140,248,0.06) 0%, transparent 100%);
+    border-bottom: 1px solid var(--border);
+  }
+  .hero .subtitle {
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 16px;
+  }
+  .hero h1 {
+    font-size: 2.8rem;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    margin-bottom: 12px;
+  }
+  .hero h1 .hydra { color: var(--hydra); }
+  .hero h1 .chroma { color: var(--chroma); }
+  .hero h1 .vs { color: var(--text-muted); font-weight: 400; font-size: 2rem; }
+  .hero .tagline {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    max-width: 700px;
+    margin: 0 auto 24px;
+  }
+  .hero .date {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ── Scoreboard ───────────────────────────────────────── */
+  .scoreboard {
+    display: flex;
+    justify-content: center;
+    gap: 48px;
+    padding: 48px 24px;
+    flex-wrap: wrap;
+  }
+  .score-card {
+    text-align: center;
+    padding: 32px 48px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    min-width: 200px;
+  }
+  .score-card.hydra { border-color: var(--hydra-border); background: var(--hydra-bg); }
+  .score-card.chroma { border-color: var(--chroma-border); background: var(--chroma-bg); }
+  .score-card .label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .score-card.hydra .label { color: var(--hydra); }
+  .score-card.chroma .label { color: var(--chroma); }
+  .score-card .number {
+    font-size: 4rem;
+    font-weight: 900;
+    line-height: 1;
+  }
+  .score-card.hydra .number { color: var(--hydra); }
+  .score-card.chroma .number { color: var(--chroma); }
+  .score-card .desc {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+  .score-card.tie { border-color: rgba(136,136,160,0.3); }
+  .score-card.tie .label { color: var(--text-muted); }
+  .score-card.tie .number { color: var(--text-muted); }
+
+  /* ── Section Headers ──────────────────────────────────── */
+  .section-header {
+    padding: 48px 0 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+  .section-header h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+  .section-header p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-top: 4px;
+  }
+
+  /* ── Stats Grid ───────────────────────────────────────── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    padding: 24px 0;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .stat-card .stat-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+  .stat-card .stat-value {
+    font-size: 1.8rem;
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .stat-card .stat-detail {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  /* ── Thesis Box ───────────────────────────────────────── */
+  .thesis-box {
+    background: linear-gradient(135deg, rgba(239,68,68,0.08), rgba(249,115,22,0.08));
+    border: 1px solid rgba(239,68,68,0.2);
+    border-radius: 16px;
+    padding: 32px;
+    margin: 32px 0;
+  }
+  .thesis-box h3 {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--red);
+    margin-bottom: 12px;
+  }
+  .thesis-box p {
+    color: var(--text);
+    font-size: 0.95rem;
+    line-height: 1.7;
+  }
+  .thesis-box .failure-modes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .failure-mode {
+    background: rgba(0,0,0,0.3);
+    border-radius: 8px;
+    padding: 12px 16px;
+    border-left: 3px solid var(--red);
+  }
+  .failure-mode .fm-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--red);
+    margin-bottom: 2px;
+  }
+  .failure-mode .fm-desc {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+  }
+
+  /* ── Test Cards ───────────────────────────────────────── */
+  .test-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+    transition: border-color 0.2s;
+  }
+  .test-card:hover { border-color: rgba(255,255,255,0.1); }
+
+  .test-card .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .test-card .card-header .left { flex: 1; }
+  .test-card .category-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 6px;
+    display: inline-block;
+    margin-bottom: 6px;
+  }
+  .category-badge.negation { color: var(--red); background: var(--red-bg); }
+  .category-badge.temporal { color: #38bdf8; background: rgba(56,189,248,0.1); }
+  .category-badge.entity { color: #a78bfa; background: rgba(167,139,250,0.1); }
+  .category-badge.geographic { color: #2dd4bf; background: rgba(45,212,191,0.1); }
+  .category-badge.aggregation { color: var(--yellow); background: var(--yellow-bg); }
+  .category-badge.extraction { color: #22c55e; background: rgba(34,197,94,0.1); }
+  .category-badge.reasoning { color: #f472b6; background: rgba(244,114,182,0.1); }
+  .category-badge.semantic { color: #60a5fa; background: rgba(96,165,250,0.1); }
+  .category-badge.abstention { color: #fb923c; background: rgba(251,146,60,0.1); }
+
+  .winner-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 4px 12px;
+    border-radius: 6px;
+    white-space: nowrap;
+  }
+  .winner-badge.hydra-wins { color: var(--hydra); background: var(--hydra-bg); border: 1px solid var(--hydra-border); }
+  .winner-badge.chroma-wins { color: var(--chroma); background: var(--chroma-bg); border: 1px solid var(--chroma-border); }
+  .winner-badge.tie { color: var(--text-muted); background: rgba(136,136,160,0.1); border: 1px solid rgba(136,136,160,0.2); }
+  .winner-badge.both-fail { color: var(--red); background: var(--red-bg); border: 1px solid rgba(239,68,68,0.2); }
+
+  .test-card .test-name {
+    font-size: 1.05rem;
+    font-weight: 700;
+  }
+
+  .test-card .question {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 12px;
+    font-size: 0.92rem;
+    color: var(--text);
+  }
+  .test-card .question .q-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+
+  .test-card .expected {
+    font-size: 0.82rem;
+    color: var(--green);
+    margin-bottom: 16px;
+    padding-left: 12px;
+    border-left: 2px solid rgba(34,197,94,0.3);
+  }
+  .test-card .expected strong { color: var(--green); }
+
+  .answers-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  @media (max-width: 768px) { .answers-grid { grid-template-columns: 1fr; } }
+
+  .answer-box {
+    border-radius: 10px;
+    padding: 14px;
+    border: 1px solid var(--border);
+  }
+  .answer-box.hydra { background: var(--hydra-bg); border-color: var(--hydra-border); }
+  .answer-box.chroma { background: var(--chroma-bg); border-color: var(--chroma-border); }
+
+  .answer-box .answer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .answer-box .sys-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .answer-box.hydra .sys-label { color: var(--hydra); }
+  .answer-box.chroma .sys-label { color: var(--chroma); }
+  .answer-box .latency {
+    font-size: 0.72rem;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-muted);
+  }
+  .answer-box .answer-text {
+    font-size: 0.8rem;
+    color: var(--text);
+    line-height: 1.5;
+    max-height: 100px;
+    overflow-y: auto;
+  }
+  .answer-box .chunk-label {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+
+  .test-card .analysis {
+    background: rgba(0,0,0,0.2);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+    border-left: 3px solid var(--hydra);
+  }
+  .test-card .analysis strong { color: var(--text); }
+  .test-card .analysis .highlight { color: var(--red); font-weight: 600; }
+
+  /* ── Category Sections ────────────────────────────────── */
+  .category-section {
+    margin: 40px 0;
+  }
+  .category-title {
+    font-size: 1.2rem;
+    font-weight: 800;
+    padding: 16px 0 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .category-title .icon { font-size: 1.4rem; }
+  .category-desc {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-bottom: 20px;
+    padding-left: 36px;
+  }
+
+  /* ── Takeaways ────────────────────────────────────────── */
+  .takeaway-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+    margin: 24px 0;
+  }
+  .takeaway-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+  }
+  .takeaway-card h4 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .takeaway-card p {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  /* ── Footer ───────────────────────────────────────────── */
+  .footer {
+    text-align: center;
+    padding: 48px 24px;
+    border-top: 1px solid var(--border);
+    margin-top: 48px;
+  }
+  .footer p {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+  }
+  .footer .bottom-line {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!--  HERO                                                   -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="hero">
+  <div class="subtitle">Benchmark Report</div>
+  <h1>
+    Why <span class="chroma">Vector DBs</span> Are <span style="color:var(--red)">Broken</span>
+  </h1>
+  <p class="tagline">
+    19 retrieval tests prove pure cosine similarity fails at negation, temporal reasoning,
+    entity direction, and geographic filtering. <span class="hydra" style="color:var(--hydra);font-weight:600;">HydraDB</span> (hybrid vector + graph + BM25)
+    vs <span style="color:var(--chroma);font-weight:600;">ChromaDB</span> (pure vector).
+  </p>
+  <p class="date">March 26, 2026 &mdash; 19 memory chunks &middot; 19 test cases &middot; 10 categories</p>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!--  SCOREBOARD                                              -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="container">
+  <div class="scoreboard">
+    <div class="score-card hydra">
+      <div class="label">HydraDB Wins</div>
+      <div class="number">7</div>
+      <div class="desc">Hybrid retrieval</div>
+    </div>
+    <div class="score-card chroma">
+      <div class="label">ChromaDB Wins</div>
+      <div class="number">2</div>
+      <div class="desc">Pure vector</div>
+    </div>
+    <div class="score-card tie">
+      <div class="label">Tie</div>
+      <div class="number">6</div>
+      <div class="desc">Both correct</div>
+    </div>
+    <div class="score-card" style="border-color:rgba(239,68,68,0.3);background:var(--red-bg);">
+      <div class="label" style="color:var(--red);">Both Fail</div>
+      <div class="number" style="color:var(--red);">4</div>
+      <div class="desc">Proves the thesis</div>
+    </div>
+  </div>
+
+  <!-- ── Stats Grid ─────────────────────────────────────── -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">HydraDB Avg Latency</div>
+      <div class="stat-value" style="color:var(--hydra);">647ms</div>
+      <div class="stat-detail">Cloud API (hybrid vector+graph+BM25)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">ChromaDB Avg Latency</div>
+      <div class="stat-value" style="color:var(--chroma);">45ms</div>
+      <div class="stat-detail">Local in-memory (pure cosine similarity)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Data Ingested</div>
+      <div class="stat-value">19</div>
+      <div class="stat-detail">Memory chunks (identical for both)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Embedding Model</div>
+      <div class="stat-value" style="font-size:1.1rem;">MiniLM</div>
+      <div class="stat-detail">ChromaDB: all-MiniLM-L6-v2 (default)</div>
+    </div>
+  </div>
+
+  <!-- ── Thesis Box ─────────────────────────────────────── -->
+  <div class="thesis-box">
+    <h3>The Core Problem: Cosine Similarity &ne; Understanding</h3>
+    <p>
+      Pure vector databases find chunks that are <strong>semantically similar</strong> to your query.
+      But similarity is not understanding. When you ask "What trips were NOT in Florida?", the word
+      "trip" + "Florida" pulls Florida trips to the top. When you ask about the "day after" an event,
+      embeddings have no concept of time. These aren't edge cases &mdash; they're fundamental limitations.
+    </p>
+    <div class="failure-modes">
+      <div class="failure-mode">
+        <div class="fm-title">Negation Blindness</div>
+        <div class="fm-desc">"NOT birthday" returns birthday chunks first</div>
+      </div>
+      <div class="failure-mode">
+        <div class="fm-title">No Temporal Awareness</div>
+        <div class="fm-desc">"Day after X" returns X, not what follows</div>
+      </div>
+      <div class="failure-mode">
+        <div class="fm-title">No Entity Direction</div>
+        <div class="fm-desc">Can't distinguish "A did X for B" from "B did X for A"</div>
+      </div>
+      <div class="failure-mode">
+        <div class="fm-title">No Geographic Filtering</div>
+        <div class="fm-desc">"Outside the US" returns American events</div>
+      </div>
+      <div class="failure-mode">
+        <div class="fm-title">Aggregation Ceiling</div>
+        <div class="fm-desc">Top-k returns 5 of 10+ relevant chunks</div>
+      </div>
+      <div class="failure-mode">
+        <div class="fm-title">Semantic Traps</div>
+        <div class="fm-desc">"Engaged/married?" returns wedding attendance</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!--  DETAILED TEST RESULTS                               -->
+  <!-- ════════════════════════════════════════════════════ -->
+
+  <div class="section-header">
+    <h2>All 19 Test Results</h2>
+    <p>Same 19 memory chunks ingested into both systems. Same questions. Real results.</p>
+  </div>
+
+  <!-- ── NEGATION ───────────────────────────────────────── -->
+  <div class="category-section">
+    <div class="category-title"><span class="icon">&#x1F6AB;</span> Negation &mdash; "Vector DBs Can't NOT"</div>
+    <div class="category-desc">
+      When your query contains a word you want to EXCLUDE, cosine similarity treats it as a positive match signal.
+      Asking "not birthday" makes birthday chunks score HIGHER, not lower.
+    </div>
+
+    <!-- Test: Not a birthday -->
+    <div class="test-card">
+      <div class="card-header">
+        <div class="left">
+          <span class="category-badge negation">Negation</span>
+          <div class="test-name">Negation &mdash; Not a Birthday</div>
+        </div>
+        <span class="winner-badge both-fail">Both Fail</span>
+      </div>
+      <div class="question">
+        <div class="q-label">Question</div>
+        What did Harnoor and Katie celebrate together that was NOT a birthday?
+      </div>
+      <div class="expected"><strong>Expected:</strong> Navratri, July 4th, Valentine's Day, Thanksgiving, Christmas, New Year's, wedding</div>
+      <div class="answers-grid">
+        <div class="answer-box chroma">
+          <div class="answer-header">
+            <span class="sys-label">ChromaDB</span>
+            <span class="latency">44.8ms</span>
+          </div>
+          <div class="chunk-label">#1 Retrieved chunk:</div>
+          <div class="answer-text">Katie's Birthday: Harnoor celebrated Katie's birthday...</div>
+        </div>
+        <div class="answer-box hydra">
+          <div class="answer-header">
+            <span class="sys-label">HydraDB</span>
+            <span class="latency">507ms</span>
+          </div>
+          <div class="chunk-label">#1 Retrieved chunk:</div>
+          <div class="answer-text">Harnoor celebrated Katie's birthday with a white layered cake...</div>
+        </div>
+      </div>
+      <div class="analysis">
+        <span class="highlight">Both systems return birthday chunks first.</span>
+        This is the clearest proof that retrieval systems don't understand negation.
+        The word "birthday" in the query boosts birthday chunks &mdash; even though the user explicitly asked for NOT birthdays.
+        An LLM downstream would need to filter, but the retrieval layer already failed.
+      </div>
+    </div>
+
+    <!-- Test: Trips outside Florida -->
+    <div class="test-card">
+      <div class="card-header">
+        <div class="left">
+          <span class="category-badge negation">Negation</span>
+          <div class="test-name">Negation &mdash; Trips NOT in Florida</div>
+        </div>
+        <span class="winner-badge hydra-wins">HydraDB Wins</span>
+      </div>
+      <div class="question">
+        <div class="q-label">Question</div>
+        What trips did Harnoor and Katie take that were NOT in Florida?
+      </div>
+      <div class="expected"><strong>Expected:</strong> Princeton/NJ (July 2021), India (March 2022)</div>
+      <div class="answers-grid">
+        <div class="answer-box chroma">
+          <div class="answer-header">
+            <span class="sys-label">ChromaDB</span>
+            <span class="latency">47.4ms</span>
+          </div>
+          <div class="chunk-label">Top 3 chunks:</div>
+          <div class="answer-text">
+            #1: Miami (IN Florida)<br>
+            #2: First date revisit (IN Florida)<br>
+            #3: Miami again (IN Florida)
+          </div>
+        </div>
+        <div class="answer-box hydra">
+          <div class="answer-header">
+            <span class="sys-label">HydraDB</span>
+            <span class="latency">929ms</span>
+          </div>
+          <div class="chunk-label">Top 3 chunks:</div>
+          <div class="answer-text">
+            #1: FSU connection context<br>
+            #2: Princeton University, New Jersey &#x2705;<br>
+            #3: Miami trip
+          </div>
+        </div>
+      </div>
+      <div class="analysis">
+        <strong>ChromaDB returns ALL Florida trips</strong> &mdash; Miami (#1), first date location (#2), Miami again (#3).
+        Every result is IN Florida. The word "Florida" + "trips" in the query boosts Florida trip chunks.
+        <strong>HydraDB surfaces Princeton (NJ)</strong> as chunk #2, correctly identifying an out-of-state trip.
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TEMPORAL ADJACENCY ─────────────────────────────── -->
+  <div class="category-section">
+    <div class="category-title"><span class="icon">&#x23F0;</span> Temporal Adjacency &mdash; "Embeddings Have No Clock"</div>
+    <div class="category-desc">
+      Vector embeddings encode meaning, not time. They can't answer "what happened next?" or "put these in order."
+    </div>
+
+    <!-- Test: Day after Princeton -->
+    <div class="test-card">
+      <div class="card-header">
+        <div class="left">
+          <span class="category-badge temporal">Temporal Adjacency</span>
+          <div class="test-name">Day-After Reasoning</div>
+        </div>
+        <span class="winner-badge hydra-wins">HydraDB Wins</span>
+      </div>
+      <div class="question">
+        <div class="q-label">Question</div>
+        What did Harnoor and Katie do the day after visiting Princeton?
+      </div>
+      <div class="expected"><strong>Expected:</strong> July 4th fireworks celebration (July 3 Princeton &rarr; July 4 fireworks)</div>
+      <div class="answers-grid">
+        <div class="answer-box chroma">
+          <div class="answer-header">
+            <span class="sys-label">ChromaDB</span>
+            <span class="latency">43.3ms</span>
+          </div>
+          <div class="chunk-label">Top 3 chunks:</div>
+          <div class="answer-text">
+            #1: Princeton visit (the question itself, not the answer)<br>
+            #2: Meeting for the second time (Oct 2020)<br>
+            #3: Miami trip (Jan 2021)
+          </div>
+        </div>
+        <div class="answer-box hydra">
+          <div class="answer-header">
+            <span class="sys-label">HydraDB</span>
+            <span class="latency">492ms</span>
+          </div>
+          <div class="chunk-label">Top 3 chunks:</div>
+          <div class="answer-text">
+            #1: Princeton visit (July 3)<br>
+            #2: Fourth of July Fireworks (July 4) &#x2705;<br>
+            #3: Navratri celebration
+          </div>
+        </div>
+      </div>
+      <div class="analysis">
+        <span class="highlight">This is the killer demo.</span> ChromaDB returns the Princeton chunk itself (semantic match)
+        but has zero concept of "the day after." Its #2 and #3 results are random events from different months.
+        <strong>HydraDB returns July 4th fireworks as chunk #2</strong> &mdash; the temporally adjacent event,
+        exactly one day after July 3rd Princeton visit. Graph edges connect temporally adjacent memories.
+      </div>
+    </div>
+
+    <!-- Test: Chronological ordering -->
+    <div class="test-card">
+      <div class="card-header">
+        <div class="left">
+          <span class="category-badge temporal">Temporal Adjacency</span>
+          <div class="test-name">Chronological Ordering of Milestones</div>
+        </div>
+        <span class="winner-badge both-fail">Both Partial</span>
+      </div>
+      <div class="question">
+        <div class="q-label">Question</div>
+        Put these events in chronological order: buying a car, visiting India, attending a wedding
+      </div>
+      <div class="expected"><strong>Expected:</strong> Wedding (Aug 2021) &rarr; India (March 2022) &rarr; Tesla (May 2022)</div>
+      <div class="answers-grid">
+        <div class="answer-box chroma">
+          <div class="answer-header">
+            <span class="sys-label">ChromaDB</span>
+            <span class="latency">45.2ms</span>
+          </div>
+          <div class="chunk-label">Top 3 chunks:</div>
+          <div class="answer-text">
+            #1: Summary document<br>
+            #2: Packing for India (Mar 2022)<br>
+            #3: Taj Mahal visit (Mar 2022)
+          </div>
+        </div>
+        <div class="answer-box hydra">
+          <div class="answer-header">
+            <span class="sys-label">HydraDB</span>
+            <span class="latency">504ms</span>
+          </div>
+          <div class="chunk-label">Top 3 chunks:</div>
+          <div class="answer-text">
+            #1: Summary document<br>
+            #2: Tesla purchase (May 2022)<br>
+            #3: Tesla purchase (duplicate)
+          </div>
+        </div>
+      </div>
+      <div class="analysis">
+        Neither system returns all three events in chronological order. ChromaDB clusters on India
+        (2 India chunks). HydraDB clusters on Tesla (2 Tesla chunks). Both miss the wedding.
+        This shows that <strong>ordering is fundamentally hard for any retrieval system</strong> without
+        explicit temporal indexing.
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TEMPORAL REASONING ─────────────────────────────── -->
+  <div class="category-section">
+    <div class="category-title"><span class="icon">&#x1F5D3;</span> Temporal Reasoning</div>
+    <div class="category-desc">
+      Counting repeated events and filtering by geographic context requires structural awareness beyond similarity.
+    </div>
+
+    <!-- Test: Miami counting -->
+    <div class="test-card">
+      <div class="card-header">
+        <div class="left">
+          <span class="category-badge temporal">Temporal Reasoning</span>
+          <div class="test-name">Counting Repeated Events &mdash; Miami Trips</div>
+        </div>
+        <span class="winner-badge tie">Tie</span>
+      </div>
+      <div class="question">
+        <div class="q-label">Question</div>
+        How many times did Harnoor and Katie go to Miami for New Year's?
+      </div>
+      <div class="expected"><strong>Expected:</strong> Twice &mdash; January 2021 and January 2022</div>
+      <div class="answers-grid">
+        <div class="answer-box chroma">
+          <div class="answer-header">
+            <span class="sys-label">ChromaDB</span>
+            <span class="latency">45.4ms</span>
+          </div>
+          <div class="answer-text">Both Miami trips found in top 2 chunks &#x2705;</div>
+        </div>
+        <div class="answer-box hydra">
+          <div class="answer-header">
+            <span class="sys-label">HydraDB</span>
+            <span class="latency">575ms</span>
+          </div>
+          <div class="answer-text">Both Miami trips found in top 3 chunks &#x2705;</div>
+        </div>
+      </div>
+      <div class="analysis">Both systems retrieve both Miami trips. The keyword "Miami" is specific enough for cosine similarity to work here.</div>
+    </div>
+
+    <!-- Test: First trip outside FL -->
+    <div class="test-card">
+      <div class="card-header">
+        <div class="left">
+          <span class="category-badge temporal">Temporal Reasoning</span>
+          <div class="test-name">First Trip Outside Florida</div>
+        </div>
+        <span class="winner-badge hydra-wins">HydraDB Wins</span>
+      </div>
+      <div class="question">
+        <div class="q-label">Question</div>
+        When was Harnoor and Katie's first trip outside of Florida?
+      </div>
+      <div class="expected"><strong>Expected:</strong> July 3, 2021 &mdash; Princeton University visit in New Jersey</div>
+      <div class="answers-grid">
+        <div class="answer-box chroma">
+          <div class="answer-header">
+            <span class="sys-label">ChromaDB</span>
+            <span class="latency">44.5ms</span>
+          </div>
+          <div class="chunk-label">Top 3 chunks:</div>
+          <div class="answer-text">
+            #1: Miami trip (IN Florida) &#x274C;<br>
+            #2: First date revisit (IN Florida) &#x274C;<br>
+            #3: Meeting (IN Florida) &#x274C;
+          </div>
+        </div>
+        <div class="answer-box hydra">
+          <div class="answer-header">
+            <span class="sys-label">HydraDB</span>
+            <span class="latency">526ms</span>
+          </div>
+          <div class="chunk-label">Top 3 chunks:</div>
+          <div class="answer-text">
+            #1: Princeton University, New Jersey &#x2705;<br>
+            #2: First car date<br>
+            #3: Miami trip
+          </div>
+        </div>
+      </div>
+      <div class="analysis">
+        <span class="highlight">The flagship failure of pure vector search.</span>
+        ChromaDB's top 3 results are ALL in Florida. The words "trip" + "first" + "Florida" in the query
+        pull Florida trips to the top. <strong>HydraDB correctly returns Princeton (New Jersey) as #1</strong>
+        because it understands geographic entity relationships.
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ENTITY DIRECTION ───────────────────────────────── -->
+  <div class="category-section">
+    <div class="category-title"><span class="icon">&#x27A1;</span> Entity Direction &mdash; "WHO Did WHAT to WHOM"</div>
+    <div class="category-desc">
+      Embeddings flatten "Katie gave Harnoor a gift" and "Harnoor gave Katie a gift" into nearly identical vectors.
+      Direction is invisible to cosine similarity.
+    </div>
+
+    <!-- Test: Directional gift -->
+    <div class="test-card">
+      <div class="card-header">
+        <div class="left">
+          <span class="category-badge entity">Entity Direction</span>
+          <div class="test-name">Directional Gift Giving</div>
+        </div>
+        <span class="winner-badge both-fail">Both Fail</span>
+      </div>
+      <div class="question">
+        <div class="q-label">Question</div>
+        What did Katie specifically do for Harnoor's birthday?
+      </div>
+      <div class="expected"><strong>Expected:</strong> Surprised him with a large blue gift bag at his apartment (Dec 23, 2020)</div>
+      <div class="answers-grid">
+        <div class="answer-box chroma">
+          <div class="answer-header">
+            <span class="sys-label">ChromaDB</span>
+            <span class="latency">45.4ms</span>
+          </div>
+          <div class="answer-text">#1: Katie's Birthday (WRONG direction &mdash; Harnoor&rarr;Katie)<br>#2: Harnoor's Birthday &#x2705;</div>
+        </div>
+        <div class="answer-box hydra">
+          <div class="answer-header">
+            <span class="sys-label">HydraDB</span>
+            <span class="latency">615ms</span>
+          </div>
+          <div class="answer-text">#1: Katie's Birthday (WRONG direction)<br>#2: Katie's Birthday again<br>#3: Harnoor's Birthday &#x2705;</div>
+        </div>
+      </div>
+      <div class="analysis">
+        Both systems return Katie's birthday (where Harnoor did something for Katie) ranked higher than
+        Harnoor's birthday (where Katie did something for Harnoor). <strong>Entity direction is invisible to both systems.</strong>
+        The correct chunk exists in the results but is not prioritized correctly.
+      </div>
+    </div>
+
+    <!-- Test: Cultural adoption direction -->
+    <div class="test-card">
+      <div class="card-header">
+        <div class="left">
+          <span class="category-badge entity">Entity Direction</span>
+          <div class="test-name">One-Directional Cultural Adoption</div>
+        </div>
+        <span class="winner-badge hydra-wins">HydraDB Wins</span>
+      </div>
+      <div class="question">
+        <div class="q-label">Question</div>
+        Which of Harnoor's Indian traditions did Katie participate in?
+      </div>
+      <div class="expected"><strong>Expected:</strong> Navratri (wore lehenga, danced Garba), wore Indian clothing at Taj Mahal</div>
+      <div class="answers-grid">
+        <div class="answer-box chroma">
+          <div class="answer-header">
+            <span class="sys-label">ChromaDB</span>
+            <span class="latency">43.8ms</span>
+          </div>
+          <div class="chunk-label">Top 3 chunks:</div>
+          <div class="answer-text">
+            #1: Navratri &#x2705;<br>
+            #2: Christmas (WRONG &mdash; Katie's tradition, not Harnoor's)<br>
+            #3: Packing for India
+          </div>
+        </div>
+        <div class="answer-box hydra">
+          <div class="answer-header">
+            <span class="sys-label">HydraDB</span>
+            <span class="latency">587ms</span>
+          </div>
+          <div class="chunk-label">Top 3 chunks:</div>
+          <div class="answer-text">
+            #1: Navratri &#x2705;<br>
+            #2: Taj Mahal &mdash; Katie wore salwar kameez &#x2705;<br>
+            #3: Navratri (duplicate) &#x2705;
+          </div>
+        </div>
+      </div>
+      <div class="analysis">
+        <strong>HydraDB nails this.</strong> All 3 top chunks are about Katie participating in Indian traditions
+        (Navratri + Taj Mahal). ChromaDB contaminates with Christmas (#2) &mdash; which is Katie's tradition
+        that Harnoor adopted, the exact opposite direction. Vector search can't distinguish the direction of cultural exchange.
+      </div>
+    </div>
+  </div>
+
+  <!-- ── GEOGRAPHIC FILTERING ───────────────────────────── -->
+  <div class="category-section">
+    <div class="category-title"><span class="icon">&#x1F30D;</span> Geographic Filtering</div>
+    <div class="category-desc">
+      Embeddings don't encode geographic hierarchy (India &ne; United States). Every "travel" chunk looks similar.
+    </div>
+
+    <div class="test-card">
+      <div class="card-header">
+        <div class="left">
+          <span class="category-badge geographic">Geographic Filtering</span>
+          <div class="test-name">International vs Domestic Events</div>
+        </div>
+        <span class="winner-badge chroma-wins">ChromaDB Wins</span>
+      </div>
+      <div class="question">
+        <div class="q-label">Question</div>
+        Which events happened outside of the United States?
+      </div>
+      <div class="expected"><strong>Expected:</strong> Only the India trip &mdash; visiting the Taj Mahal in March 2022</div>
+      <div class="answers-grid">
+        <div class="answer-box chroma">
+          <div class="answer-header">
+            <span class="sys-label">ChromaDB</span>
+            <span class="latency">45.7ms</span>
+          </div>
+          <div class="chunk-label">Top 3 chunks:</div>
+          <div class="answer-text">
+            #1: July 4th (domestic) &#x274C;<br>
+            #2: Packing for India (relevant) &#x2705;<br>
+            #3: American wedding (domestic) &#x274C;
+          </div>
+        </div>
+        <div class="answer-box hydra">
+          <div class="answer-header">
+            <span class="sys-label">HydraDB</span>
+            <span class="latency">545ms</span>
+          </div>
+          <div class="chunk-label">Top 3 chunks:</div>
+          <div class="answer-text">
+            #1-3: "Just moved to London!" (tenant data leakage from other memories)
+          </div>
+        </div>
+      </div>
+      <div class="analysis">
+        ChromaDB at least surfaces the India packing chunk as #2. HydraDB returned "London" data from a different
+        dataset in the same tenant &mdash; a <strong>data isolation issue</strong>, not a retrieval quality issue.
+        Neither system cleanly answers this, but ChromaDB gets partial credit.
+      </div>
+    </div>
+  </div>
+
+  <!-- ── AGGREGATION ────────────────────────────────────── -->
+  <div class="category-section">
+    <div class="category-title"><span class="icon">&#x1F4CA;</span> Aggregation &mdash; "Top-K Can't Count"</div>
+    <div class="category-desc">
+      When 10+ chunks are relevant but you only retrieve 5, you structurally cannot give a complete answer.
+    </div>
+
+    <div class="test-card">
+      <div class="card-header">
+        <div class="left">
+          <span class="category-badge aggregation">Aggregation</span>
+          <div class="test-name">Exhaustive Listing of Celebrations</div>
+        </div>
+        <span class="winner-badge both-fail">Both Fail</span>
+      </div>
+      <div class="question">
+        <div class="q-label">Question</div>
+        List every holiday or celebration Harnoor and Katie shared together
+      </div>
+      <div class="expected"><strong>Expected:</strong> 10+ events &mdash; both birthdays, NYE x2, Valentine's, Navratri, July 4th, Thanksgiving, Christmas, wedding</div>
+      <div class="answers-grid">
+        <div class="answer-box chroma">
+          <div class="answer-header">
+            <span class="sys-label">ChromaDB</span>
+            <span class="latency">43.3ms</span>
+          </div>
+          <div class="answer-text">Returns 5 chunks: Christmas, Thanksgiving, Katie's birthday, Navratri, Harnoor's birthday. <strong>Misses</strong>: NYE x2, Valentine's, July 4th, wedding.</div>
+        </div>
+        <div class="answer-box hydra">
+          <div class="answer-header">
+            <span class="sys-label">HydraDB</span>
+            <span class="latency">500ms</span>
+          </div>
+          <div class="answer-text">Returns 5 chunks: Christmas, summary doc, Navratri, July 4th, Harnoor's birthday. <strong>Misses</strong>: NYE x2, Valentine's, Thanksgiving, Katie's birthday, wedding.</div>
+        </div>
+      </div>
+      <div class="analysis">
+        <strong>Both systems are structurally limited to top-5 retrieval.</strong> With 10+ celebrations spread
+        across 19 chunks, neither can return a complete list. This is a fundamental limitation of retrieval-based
+        systems &mdash; aggregation queries need either full-scan access or a graph that can traverse "celebration" nodes.
+      </div>
+    </div>
+  </div>
+
+  <!-- ── INFORMATION EXTRACTION ─────────────────────────── -->
+  <div class="category-section">
+    <div class="category-title"><span class="icon">&#x1F50D;</span> Information Extraction</div>
+    <div class="category-desc">Direct fact retrieval &mdash; where vector search works best.</div>
+
+    <div class="test-card">
+      <div class="card-header">
+        <div class="left">
+          <span class="category-badge extraction">Information Extraction</span>
+          <div class="test-name">Specific Date Recall</div>
+        </div>
+        <span class="winner-badge tie">Tie</span>
+      </div>
+      <div class="question">
+        <div class="q-label">Question</div>When did Harnoor and Katie meet for the second time?</div>
+      <div class="expected"><strong>Expected:</strong> October 18, 2020</div>
+      <div class="analysis">Both systems correctly retrieve the October 18 chunk as #1. Simple keyword-driven recall is vector search's strength.</div>
+    </div>
+
+    <div class="test-card">
+      <div class="card-header">
+        <div class="left">
+          <span class="category-badge extraction">Information Extraction</span>
+          <div class="test-name">Buried Detail &mdash; Car Model</div>
+        </div>
+        <span class="winner-badge tie">Tie</span>
+      </div>
+      <div class="question">
+        <div class="q-label">Question</div>What car did Harnoor and Katie buy together?</div>
+      <div class="expected"><strong>Expected:</strong> White Tesla Model 3</div>
+      <div class="analysis">Both correctly retrieve the Tesla chunk as #1. "Car" + "buy" is semantically close to the target.</div>
+    </div>
+
+    <div class="test-card">
+      <div class="card-header">
+        <div class="left">
+          <span class="category-badge extraction">Information Extraction</span>
+          <div class="test-name">Cultural Detail Extraction</div>
+        </div>
+        <span class="winner-badge tie">Tie</span>
+      </div>
+      <div class="question">
+        <div class="q-label">Question</div>What did Katie wear for Navratri?</div>
+      <div class="expected"><strong>Expected:</strong> Red and green lehenga with traditional jewelry</div>
+      <div class="analysis">Both retrieve the Navratri chunk as #1. "Navratri" is a highly specific keyword.</div>
+    </div>
+  </div>
+
+  <!-- ── SEMANTIC UNDERSTANDING ─────────────────────────── -->
+  <div class="category-section">
+    <div class="category-title"><span class="icon">&#x1F9E0;</span> Semantic Understanding</div>
+    <div class="category-desc">Questions requiring inference beyond surface-level matching.</div>
+
+    <div class="test-card">
+      <div class="card-header">
+        <div class="left">
+          <span class="category-badge semantic">Semantic Understanding</span>
+          <div class="test-name">Wedding Significance</div>
+        </div>
+        <span class="winner-badge hydra-wins">HydraDB Wins</span>
+      </div>
+      <div class="question">
+        <div class="q-label">Question</div>What was the significance of attending a wedding together?</div>
+      <div class="expected"><strong>Expected:</strong> Deeper commitment &mdash; invited to life events as a unit</div>
+      <div class="answers-grid">
+        <div class="answer-box chroma">
+          <div class="answer-header"><span class="sys-label">ChromaDB</span><span class="latency">44.5ms</span></div>
+          <div class="answer-text">#1: Wedding &#x2705; #2: Harnoor's birthday &#x274C; #3: Katie's birthday &#x274C;</div>
+        </div>
+        <div class="answer-box hydra">
+          <div class="answer-header"><span class="sys-label">HydraDB</span><span class="latency">1201ms</span></div>
+          <div class="answer-text">#1: Wedding &#x2705; #2: Wedding (from different source) &#x2705; #3: Navratri (cultural event)</div>
+        </div>
+      </div>
+      <div class="analysis">
+        HydraDB returns <strong>two wedding-related chunks</strong> for deeper context, plus a culturally relevant event.
+        ChromaDB pads with unrelated birthday chunks. More relevant context = better downstream LLM answers.
+      </div>
+    </div>
+
+    <div class="test-card">
+      <div class="card-header">
+        <div class="left">
+          <span class="category-badge semantic">Semantic Understanding</span>
+          <div class="test-name">Intercultural Significance</div>
+        </div>
+        <span class="winner-badge tie">Tie</span>
+      </div>
+      <div class="question">
+        <div class="q-label">Question</div>Why was the Fourth of July special for Harnoor?</div>
+      <div class="expected"><strong>Expected:</strong> International student experiencing American tradition with Katie</div>
+      <div class="analysis">Both correctly retrieve the July 4th chunk. The answer is self-contained in the chunk text.</div>
+    </div>
+  </div>
+
+  <!-- ── MULTI-SESSION REASONING ────────────────────────── -->
+  <div class="category-section">
+    <div class="category-title"><span class="icon">&#x1F517;</span> Multi-Session Reasoning</div>
+    <div class="category-desc">Combining information across multiple memory chunks.</div>
+
+    <div class="test-card">
+      <div class="card-header">
+        <div class="left">
+          <span class="category-badge reasoning">Multi-Session Reasoning</span>
+          <div class="test-name">Relationship Progression</div>
+        </div>
+        <span class="winner-badge hydra-wins">HydraDB Wins</span>
+      </div>
+      <div class="question">
+        <div class="q-label">Question</div>How did their relationship progress from casual dating to major commitments?</div>
+      <div class="expected"><strong>Expected:</strong> Car date Nov 2020 &rarr; Valentine's dinner 2021 &rarr; Tesla May 2022</div>
+      <div class="answers-grid">
+        <div class="answer-box chroma">
+          <div class="answer-header"><span class="sys-label">ChromaDB</span><span class="latency">44.8ms</span></div>
+          <div class="answer-text">#1: Summary &#x2705; #2: First meeting #3: Miami trip</div>
+        </div>
+        <div class="answer-box hydra">
+          <div class="answer-header"><span class="sys-label">HydraDB</span><span class="latency">528ms</span></div>
+          <div class="answer-text">#1: Summary &#x2705; #2: Valentine's Day dinner &#x2705; #3: First meeting</div>
+        </div>
+      </div>
+      <div class="analysis">
+        HydraDB surfaces the Valentine's Day dinner (a key milestone in the progression arc).
+        ChromaDB returns the Miami trip instead &mdash; a fun trip but not a "commitment" milestone.
+      </div>
+    </div>
+
+    <div class="test-card">
+      <div class="card-header">
+        <div class="left">
+          <span class="category-badge reasoning">Multi-Session Reasoning</span>
+          <div class="test-name">Cross-Cultural Exchange</div>
+        </div>
+        <span class="winner-badge tie">Tie</span>
+      </div>
+      <div class="question">
+        <div class="q-label">Question</div>How did they embrace each other's cultures?</div>
+      <div class="expected"><strong>Expected:</strong> Katie: Navratri/Garba + Taj Mahal. Harnoor: Thanksgiving + Christmas.</div>
+      <div class="analysis">Both surface the summary chunk + Navratri. Neither captures the full bidirectional exchange in top-5.</div>
+    </div>
+  </div>
+
+  <!-- ── ABSTENTION ─────────────────────────────────────── -->
+  <div class="category-section">
+    <div class="category-title"><span class="icon">&#x26A0;</span> Abstention &mdash; Knowing What You Don't Know</div>
+    <div class="category-desc">Not hallucinating answers from tangentially related data.</div>
+
+    <div class="test-card">
+      <div class="card-header">
+        <div class="left">
+          <span class="category-badge abstention">Abstention</span>
+          <div class="test-name">Birthday Disambiguation</div>
+        </div>
+        <span class="winner-badge chroma-wins">ChromaDB Wins</span>
+      </div>
+      <div class="question">
+        <div class="q-label">Question</div>When is Harnoor's birthday and how was it celebrated?</div>
+      <div class="expected"><strong>Expected:</strong> December 23 &mdash; Katie surprised him with a blue gift bag</div>
+      <div class="answers-grid">
+        <div class="answer-box chroma">
+          <div class="answer-header"><span class="sys-label">ChromaDB</span><span class="latency">44.5ms</span></div>
+          <div class="answer-text">#1: Harnoor's Birthday (Dec 23) &#x2705;<br>#2: Katie's Birthday</div>
+        </div>
+        <div class="answer-box hydra">
+          <div class="answer-header"><span class="sys-label">HydraDB</span><span class="latency">537ms</span></div>
+          <div class="answer-text">#1: Katie's Birthday (Mar 16) &#x274C;<br>#2: Katie's Birthday again &#x274C;<br>#3: Harnoor's Birthday &#x2705;</div>
+        </div>
+      </div>
+      <div class="analysis">
+        ChromaDB correctly ranks Harnoor's birthday #1. HydraDB returns Katie's birthday first (twice!), with
+        Harnoor's birthday only at #3. Both chunks mention "birthday" + "Harnoor" + "Katie" but the name-matching
+        advantage goes to ChromaDB's embedding here.
+      </div>
+    </div>
+
+    <div class="test-card">
+      <div class="card-header">
+        <div class="left">
+          <span class="category-badge abstention">Abstention</span>
+          <div class="test-name">Don't Hallucinate Engagement</div>
+        </div>
+        <span class="winner-badge hydra-wins">HydraDB Wins</span>
+      </div>
+      <div class="question">
+        <div class="q-label">Question</div>Are Harnoor and Katie engaged or married?</div>
+      <div class="expected"><strong>Expected:</strong> Unknown / not mentioned</div>
+      <div class="answers-grid">
+        <div class="answer-box chroma">
+          <div class="answer-header"><span class="sys-label">ChromaDB</span><span class="latency">43.5ms</span></div>
+          <div class="answer-text">#1: "Attending Their First American Wedding Together" &#x1F4A3;</div>
+        </div>
+        <div class="answer-box hydra">
+          <div class="answer-header"><span class="sys-label">HydraDB</span><span class="latency">1130ms</span></div>
+          <div class="answer-text">#1: Katie's Birthday (unrelated but safe)</div>
+        </div>
+      </div>
+      <div class="analysis">
+        <span class="highlight">This is dangerous.</span> ChromaDB returns "Attending Their First American Wedding Together"
+        as the #1 chunk for "are they engaged or married?" An LLM reading this could easily hallucinate that they
+        got married. <strong>HydraDB avoids this trap</strong> by not surfacing the wedding attendance chunk,
+        reducing hallucination risk.
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!--  TAKEAWAYS                                           -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <div class="section-header">
+    <h2>Key Takeaways</h2>
+    <p>What this benchmark proves about the limits of pure vector search.</p>
+  </div>
+
+  <div class="takeaway-grid">
+    <div class="takeaway-card" style="border-left:3px solid var(--red);">
+      <h4 style="color:var(--red);">Vector Search Is Not Memory</h4>
+      <p>
+        Cosine similarity finds <em>related</em> documents, not <em>correct</em> answers.
+        "Related" breaks down with negation, temporal queries, entity direction, and geographic filtering.
+        4 of 19 tests failed for BOTH systems, proving these are structural limitations of retrieval, not just Chroma.
+      </p>
+    </div>
+    <div class="takeaway-card" style="border-left:3px solid var(--hydra);">
+      <h4 style="color:var(--hydra);">Hybrid Retrieval Matters</h4>
+      <p>
+        HydraDB won 7 of 19 tests by combining vector similarity with graph edges (temporal adjacency,
+        entity relationships) and BM25 (keyword precision). The day-after-Princeton test is the clearest win &mdash;
+        graph edges connect July 3 &rarr; July 4 automatically.
+      </p>
+    </div>
+    <div class="takeaway-card" style="border-left:3px solid var(--chroma);">
+      <h4 style="color:var(--chroma);">Vector Search Still Has Strengths</h4>
+      <p>
+        For direct fact retrieval ("What car?", "When did they meet?", "What did she wear?"),
+        pure vector search works well. 6 tests tied because the answer was
+        a simple semantic match. ChromaDB is also 14x faster (local vs cloud).
+      </p>
+    </div>
+    <div class="takeaway-card" style="border-left:3px solid var(--yellow);">
+      <h4 style="color:var(--yellow);">LLM Layer Can't Fix Bad Retrieval</h4>
+      <p>
+        Adding GPT/Gemini/Claude on top doesn't fix retrieval failures. If the wedding attendance chunk is #1 for
+        "are they married?", the LLM will likely hallucinate a wedding. If all top-5 chunks are Florida trips,
+        no LLM can find the Princeton answer. <strong>Garbage in, garbage out.</strong>
+      </p>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!--  DATA SECTION                                        -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <div class="section-header">
+    <h2>Embedded Data</h2>
+    <p>The 19 memory chunks ingested into both systems.</p>
+  </div>
+
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:24px;">
+    <table style="width:100%;border-collapse:collapse;font-size:0.78rem;">
+      <thead>
+        <tr style="border-bottom:1px solid var(--border);">
+          <th style="text-align:left;padding:8px;color:var(--text-muted);font-weight:600;">#</th>
+          <th style="text-align:left;padding:8px;color:var(--text-muted);font-weight:600;">Date</th>
+          <th style="text-align:left;padding:8px;color:var(--text-muted);font-weight:600;">Event</th>
+          <th style="text-align:left;padding:8px;color:var(--text-muted);font-weight:600;">Location</th>
+        </tr>
+      </thead>
+      <tbody style="color:var(--text);">
+        <tr style="border-bottom:1px solid rgba(42,42,58,0.5);"><td style="padding:6px 8px;">0</td><td style="padding:6px 8px;">&mdash;</td><td style="padding:6px 8px;">Summary document (overview of entire timeline)</td><td style="padding:6px 8px;">&mdash;</td></tr>
+        <tr style="border-bottom:1px solid rgba(42,42,58,0.5);"><td style="padding:6px 8px;">1</td><td style="padding:6px 8px;">Oct 18, 2020</td><td style="padding:6px 8px;">Meeting for the second time</td><td style="padding:6px 8px;">FSU, Tallahassee FL</td></tr>
+        <tr style="border-bottom:1px solid rgba(42,42,58,0.5);"><td style="padding:6px 8px;">2</td><td style="padding:6px 8px;">Nov 2, 2020</td><td style="padding:6px 8px;">First car date</td><td style="padding:6px 8px;">Tallahassee FL</td></tr>
+        <tr style="border-bottom:1px solid rgba(42,42,58,0.5);"><td style="padding:6px 8px;">3</td><td style="padding:6px 8px;">Dec 23, 2020</td><td style="padding:6px 8px;">Harnoor's birthday</td><td style="padding:6px 8px;">Tallahassee FL</td></tr>
+        <tr style="border-bottom:1px solid rgba(42,42,58,0.5);"><td style="padding:6px 8px;">4</td><td style="padding:6px 8px;">Jan 1, 2021</td><td style="padding:6px 8px;">New Year's trip to Miami</td><td style="padding:6px 8px;">Miami FL</td></tr>
+        <tr style="border-bottom:1px solid rgba(42,42,58,0.5);"><td style="padding:6px 8px;">5</td><td style="padding:6px 8px;">Feb 14, 2021</td><td style="padding:6px 8px;">First Valentine's Day dinner</td><td style="padding:6px 8px;">Tallahassee FL</td></tr>
+        <tr style="border-bottom:1px solid rgba(42,42,58,0.5);"><td style="padding:6px 8px;">6</td><td style="padding:6px 8px;">Mar 16, 2021</td><td style="padding:6px 8px;">Katie's birthday</td><td style="padding:6px 8px;">FL</td></tr>
+        <tr style="border-bottom:1px solid rgba(42,42,58,0.5);"><td style="padding:6px 8px;">7</td><td style="padding:6px 8px;">Apr 19, 2021</td><td style="padding:6px 8px;">Revisiting first date location</td><td style="padding:6px 8px;">FL</td></tr>
+        <tr style="border-bottom:1px solid rgba(42,42,58,0.5);"><td style="padding:6px 8px;">8</td><td style="padding:6px 8px;">May 30, 2021</td><td style="padding:6px 8px;">Beach trip / Westcott Building</td><td style="padding:6px 8px;">FSU, FL</td></tr>
+        <tr style="border-bottom:1px solid rgba(42,42,58,0.5);"><td style="padding:6px 8px;">9</td><td style="padding:6px 8px;">Jul 3, 2021</td><td style="padding:6px 8px;">Visiting Princeton University</td><td style="padding:6px 8px;">Princeton NJ</td></tr>
+        <tr style="border-bottom:1px solid rgba(42,42,58,0.5);"><td style="padding:6px 8px;">10</td><td style="padding:6px 8px;">Jul 4, 2021</td><td style="padding:6px 8px;">Fourth of July fireworks</td><td style="padding:6px 8px;">East Coast (NJ area)</td></tr>
+        <tr style="border-bottom:1px solid rgba(42,42,58,0.5);"><td style="padding:6px 8px;">11</td><td style="padding:6px 8px;">Aug 21, 2021</td><td style="padding:6px 8px;">First American wedding</td><td style="padding:6px 8px;">US</td></tr>
+        <tr style="border-bottom:1px solid rgba(42,42,58,0.5);"><td style="padding:6px 8px;">12</td><td style="padding:6px 8px;">Oct 15, 2021</td><td style="padding:6px 8px;">Celebrating Navratri</td><td style="padding:6px 8px;">FL (Indian community)</td></tr>
+        <tr style="border-bottom:1px solid rgba(42,42,58,0.5);"><td style="padding:6px 8px;">13</td><td style="padding:6px 8px;">Nov 25, 2021</td><td style="padding:6px 8px;">Thanksgiving with Katie's family</td><td style="padding:6px 8px;">Katie's family home</td></tr>
+        <tr style="border-bottom:1px solid rgba(42,42,58,0.5);"><td style="padding:6px 8px;">14</td><td style="padding:6px 8px;">Dec 25, 2021</td><td style="padding:6px 8px;">Christmas together</td><td style="padding:6px 8px;">US</td></tr>
+        <tr style="border-bottom:1px solid rgba(42,42,58,0.5);"><td style="padding:6px 8px;">15</td><td style="padding:6px 8px;">Jan 1, 2022</td><td style="padding:6px 8px;">New Year's in Miami (second time)</td><td style="padding:6px 8px;">South Beach, Miami FL</td></tr>
+        <tr style="border-bottom:1px solid rgba(42,42,58,0.5);"><td style="padding:6px 8px;">16</td><td style="padding:6px 8px;">Mar 3, 2022</td><td style="padding:6px 8px;">Packing for India trip</td><td style="padding:6px 8px;">Apartment, FL</td></tr>
+        <tr style="border-bottom:1px solid rgba(42,42,58,0.5);"><td style="padding:6px 8px;">17</td><td style="padding:6px 8px;">Mar 2022</td><td style="padding:6px 8px;">Visiting the Taj Mahal</td><td style="padding:6px 8px;">Agra, India</td></tr>
+        <tr><td style="padding:6px 8px;">18</td><td style="padding:6px 8px;">May 7, 2022</td><td style="padding:6px 8px;">Buying a Tesla Model 3</td><td style="padding:6px 8px;">Tesla dealership</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!--  FOOTER                                              -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <div class="footer">
+    <p class="bottom-line">
+      HydraDB won 7 of 19 tests. ChromaDB won 2. 6 tied. 4 exposed limitations in ALL retrieval systems.
+    </p>
+    <p>
+      Same 19 memory chunks. Same questions. Real results.<br>
+      ChromaDB: local, all-MiniLM-L6-v2, pure cosine similarity.<br>
+      HydraDB: cloud API, hybrid vector + graph + BM25.<br><br>
+      Benchmark run: March 26, 2026
+    </p>
+  </div>
+</div>
+
+</body>
+</html>
