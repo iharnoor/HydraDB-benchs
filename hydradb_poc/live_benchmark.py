@@ -35,150 +35,189 @@ class TestCase:
 
 
 TEST_CASES = [
+    # ── Information Extraction ────────────────────────────
     TestCase(
         category="Information Extraction",
-        name="Buried fact recall",
+        name="Specific date recall",
         messages=[
             [
-                {"role": "user", "content": "I'm working on 3 projects. First is migrating our auth service to Rust. Second is a recommendation engine in Python. Third is a CLI tool in Go."},
-                {"role": "assistant", "content": "Nice variety! How's progress?"},
-            ],
-            [
-                {"role": "user", "content": "The auth migration hit 50k req/sec in staging. It's deployed on 3 pods in us-east-1. Planning to expand to eu-west-1 next month."},
-                {"role": "assistant", "content": "Great throughput!"},
+                {"role": "user", "content": "Harnoor and Katie met for the second time on October 18, 2020. They had first connected earlier that month through mutual friends at Florida State University."},
+                {"role": "assistant", "content": "Nice, FSU connection!"},
             ],
         ],
-        question="How many pods is the auth service deployed on and in which region?",
-        expected="3 pods in us-east-1",
-        why_matters="Specific fact buried among many details",
+        question="When did Harnoor and Katie meet for the second time?",
+        expected="October 18, 2020",
+        why_matters="Exact date retrieval from a specific memory",
     ),
     TestCase(
         category="Information Extraction",
-        name="Implicit preference",
+        name="Buried detail in rich context",
         messages=[
             [
-                {"role": "user", "content": "I've tried PostgreSQL, Redis, DynamoDB, and Neo4j. For anything involving relationships between entities, nothing beats a graph database. Neo4j's Cypher language just clicked."},
-                {"role": "assistant", "content": "Graph DBs are powerful for connected data."},
+                {"role": "user", "content": "On May 7, 2022, Harnoor and Katie bought a car together — a white Tesla Model 3. They posed at the Tesla dealership with an employee handing over the keys. Harnoor wore a gray blazer. They had been together for about a year and seven months."},
+                {"role": "assistant", "content": "Big milestone!"},
             ],
         ],
-        question="What type of database does the user prefer for relational/connected data?",
-        expected="Graph databases / Neo4j",
-        why_matters="Preference is implicit, not stated as 'I prefer X'",
+        question="What car did Harnoor and Katie buy together?",
+        expected="White Tesla Model 3",
+        why_matters="Specific fact (car model + color) buried in descriptive paragraph",
+    ),
+    TestCase(
+        category="Information Extraction",
+        name="Cultural detail extraction",
+        messages=[
+            [
+                {"role": "user", "content": "On October 15, 2021, Harnoor and Katie celebrated Navratri together. They both dressed in traditional Indian attire and held dandiya sticks for the Garba dance. Katie wore a beautiful red and green lehenga with traditional jewelry. Harnoor wore a teal kurta."},
+                {"role": "assistant", "content": "That's beautiful!"},
+            ],
+        ],
+        question="What did Katie wear for Navratri?",
+        expected="Red and green lehenga with traditional jewelry",
+        why_matters="Specific clothing detail from a cultural event description",
+    ),
+
+    # ── Multi-Session Reasoning ───────────────────────────
+    TestCase(
+        category="Multi-Session Reasoning",
+        name="Synthesize relationship progression",
+        messages=[
+            [
+                {"role": "user", "content": "November 2, 2020 — Harnoor and Katie went on their first car date. Katie was driving. This was one of their first real dates outside of campus."},
+                {"role": "assistant", "content": "Cute!"},
+            ],
+            [
+                {"role": "user", "content": "February 14, 2021 — They celebrated their first Valentine's Day at an upscale restaurant in Tallahassee. Both dressed up. It was their first formal date night."},
+                {"role": "assistant", "content": "Fancy!"},
+            ],
+            [
+                {"role": "user", "content": "May 7, 2022 — They bought a white Tesla Model 3 together at a dealership. One of the biggest financial commitments as a couple."},
+                {"role": "assistant", "content": "Wow!"},
+            ],
+        ],
+        question="How did Harnoor and Katie's relationship progress from casual dating to major commitments?",
+        expected="First car date Nov 2020 → first formal dinner Valentine's 2021 → bought a Tesla together May 2022",
+        why_matters="Requires combining 3 sessions to show relationship arc",
     ),
     TestCase(
         category="Multi-Session Reasoning",
-        name="Synthesize across sessions",
+        name="Cross-cultural exchange pattern",
         messages=[
             [
-                {"role": "user", "content": "I just joined NeuralPath. We build AI medical diagnostics. I lead the backend team."},
-                {"role": "assistant", "content": "Exciting!"},
+                {"role": "user", "content": "October 15, 2021 — Katie celebrated Navratri with Harnoor, wore a red and green lehenga, and danced Garba. She fully embraced Indian culture."},
+                {"role": "assistant", "content": "Amazing!"},
             ],
             [
-                {"role": "user", "content": "Backend team grew to 5 engineers. We shipped our first FDA-approved model for skin cancer detection."},
-                {"role": "assistant", "content": "Congrats on FDA approval!"},
+                {"role": "user", "content": "November 25, 2021 — Harnoor spent Thanksgiving with Katie's family. Traditional spread — turkey, ham, cranberries. First American family holiday for Harnoor."},
+                {"role": "assistant", "content": "So wholesome!"},
             ],
             [
-                {"role": "user", "content": "NeuralPath closed a $40M Series B from a16z. Expanding to cardiology next quarter."},
-                {"role": "assistant", "content": "Amazing milestone!"},
+                {"role": "user", "content": "March 2022 — They visited the Taj Mahal. Katie wore a turquoise traditional Indian salwar kameez. They also met Harnoor's family who warmly welcomed Katie."},
+                {"role": "assistant", "content": "Dream trip!"},
             ],
         ],
-        question="What is the user's role, team size, and company funding?",
-        expected="Backend lead at NeuralPath, 5 engineers, $40M Series B from a16z",
-        why_matters="Requires combining facts from 3 separate sessions",
+        question="How did Harnoor and Katie embrace each other's cultures?",
+        expected="Katie: Navratri/lehenga/Garba, wore Indian clothing at Taj Mahal. Harnoor: Thanksgiving with Katie's family, Christmas together.",
+        why_matters="Must combine cultural exchange moments across multiple sessions",
     ),
+
+    # ── Temporal Reasoning ────────────────────────────────
     TestCase(
-        category="Knowledge Updates",
-        name="Location + role change",
+        category="Temporal Reasoning",
+        name="Timeline ordering",
         messages=[
             [
-                {"role": "user", "content": "I live in New York. I work at Goldman Sachs as a quant."},
-                {"role": "assistant", "content": "NYC quant life!"},
+                {"role": "user", "content": "January 1, 2021 — Harnoor and Katie traveled to Miami for New Year's. First trip as a couple. Only 2.5 months into dating."},
+                {"role": "assistant", "content": "Fun!"},
             ],
             [
-                {"role": "user", "content": "Just moved to London! Transferred to the London office."},
-                {"role": "assistant", "content": "London is great."},
-            ],
-            [
-                {"role": "user", "content": "Got promoted — I'm now Head of Quant Research, still in London."},
-                {"role": "assistant", "content": "Congrats!"},
+                {"role": "user", "content": "January 1, 2022 — They rang in 2022 on South Beach in Miami again. Making it an annual tradition. Now over 14 months together."},
+                {"role": "assistant", "content": "Love a tradition!"},
             ],
         ],
-        question="Where does the user currently live and what is their role?",
-        expected="London, Head of Quant Research at Goldman Sachs",
-        why_matters="Must return LATEST state, not original NYC/quant",
-    ),
-    TestCase(
-        category="Knowledge Updates",
-        name="Diet change",
-        messages=[
-            [
-                {"role": "user", "content": "I'm a huge steak lover. Favorite restaurant is Peter Luger's."},
-                {"role": "assistant", "content": "Peter Luger's is legendary!"},
-            ],
-            [
-                {"role": "user", "content": "Gone vegetarian. Doctor said cholesterol was dangerously high. Had to give up steak."},
-                {"role": "assistant", "content": "Health first."},
-            ],
-        ],
-        question="What is the user's current diet and why did they change?",
-        expected="Vegetarian, due to high cholesterol",
-        why_matters="Must return current state (vegetarian), not old (steak lover)",
+        question="How many times did Harnoor and Katie go to Miami for New Year's?",
+        expected="Twice — January 2021 and January 2022",
+        why_matters="Must identify a repeated event across two different years",
     ),
     TestCase(
         category="Temporal Reasoning",
-        name="Career timeline",
+        name="First trip outside Florida",
         messages=[
             [
-                {"role": "user", "content": "Career: MIT 2018, Google 2018-2021, co-founded DataFlow 2021, acquired by Snowflake 2023, took 6 months off, now consulting."},
-                {"role": "assistant", "content": "Impressive trajectory!"},
+                {"role": "user", "content": "January 1, 2021 — First trip together to Miami."},
+                {"role": "assistant", "content": "Nice!"},
+            ],
+            [
+                {"role": "user", "content": "May 30, 2021 — Beach trip to FSU campus, Westcott Building photo."},
+                {"role": "assistant", "content": "Classic FSU!"},
+            ],
+            [
+                {"role": "user", "content": "July 3, 2021 — Visited Princeton University in New Jersey. First trip outside of Florida together, about eight months into the relationship."},
+                {"role": "assistant", "content": "East coast road trip!"},
             ],
         ],
-        question="What did the user do between 2021 and 2023?",
-        expected="Co-founded DataFlow, acquired by Snowflake",
-        why_matters="Must filter by time range, not just similarity",
+        question="When was Harnoor and Katie's first trip outside of Florida?",
+        expected="July 3, 2021 — Princeton University visit in New Jersey",
+        why_matters="Must distinguish Florida trips from out-of-state trips",
+    ),
+
+    # ── Semantic Understanding ────────────────────────────
+    TestCase(
+        category="Semantic Understanding",
+        name="Relationship milestone inference",
+        messages=[
+            [
+                {"role": "user", "content": "August 21, 2021 — Harnoor and Katie attended their first American wedding together at a beautiful outdoor venue with rose gardens. Katie wore a navy polka-dot dress, Harnoor a navy suit. Going to a wedding together signaled deeper commitment — about ten months together."},
+                {"role": "assistant", "content": "Couple goals!"},
+            ],
+        ],
+        question="What was the significance of Harnoor and Katie attending a wedding together?",
+        expected="It signaled deeper commitment — being invited to important life events as a unit",
+        why_matters="Must infer emotional/relational meaning, not just recall facts",
     ),
     TestCase(
-        category="Temporal Reasoning",
-        name="Current vs past editor",
+        category="Semantic Understanding",
+        name="Intercultural significance",
         messages=[
             [
-                {"role": "user", "content": "I use VS Code for all my coding. Best editor."},
-                {"role": "assistant", "content": "VS Code is popular."},
-            ],
-            [
-                {"role": "user", "content": "Switched to Cursor. AI features are incredible. VS Code feels outdated now."},
-                {"role": "assistant", "content": "Cursor is great."},
+                {"role": "user", "content": "July 4, 2021 — Harnoor and Katie celebrated the Fourth of July, watching fireworks in a large crowd. Celebrating America's Independence Day was especially meaningful for Harnoor as an international student from India experiencing this American tradition with Katie."},
+                {"role": "assistant", "content": "Beautiful!"},
             ],
         ],
-        question="What code editor does the user currently use?",
-        expected="Cursor",
-        why_matters="'VS Code' keyword-matches better but is outdated",
+        question="Why was the Fourth of July celebration special for Harnoor?",
+        expected="As an international student from India, experiencing this American tradition with Katie was culturally meaningful",
+        why_matters="Must extract the cultural significance, not just 'they watched fireworks'",
+    ),
+
+    # ── Abstention / Precision ────────────────────────────
+    TestCase(
+        category="Abstention",
+        name="Don't confuse similar events",
+        messages=[
+            [
+                {"role": "user", "content": "December 23, 2020 — Katie surprised Harnoor with a birthday celebration. She got him a large blue 'Happy Birthday' gift bag. They celebrated at Harnoor's apartment."},
+                {"role": "assistant", "content": "Sweet!"},
+            ],
+            [
+                {"role": "user", "content": "March 16, 2021 — Harnoor celebrated Katie's birthday with a white layered cake that read 'Happy Birthday Katie'. They celebrated at what appears to be Katie's family home."},
+                {"role": "assistant", "content": "Reciprocated!"},
+            ],
+        ],
+        question="When is Harnoor's birthday and how was it celebrated?",
+        expected="December 23 — Katie surprised him with a blue gift bag at his apartment",
+        why_matters="Must NOT confuse Harnoor's birthday with Katie's birthday",
     ),
     TestCase(
         category="Abstention",
-        name="Don't hallucinate hosting",
+        name="Don't hallucinate engagement",
         messages=[
             [
-                {"role": "user", "content": "Building a mobile app in React Native. Using Firebase for auth."},
-                {"role": "assistant", "content": "Good stack!"},
+                {"role": "user", "content": "May 7, 2022 — Harnoor and Katie bought a white Tesla Model 3 together. One of the biggest financial and practical commitments as a couple. About a year and seven months together."},
+                {"role": "assistant", "content": "Major step!"},
             ],
         ],
-        question="What cloud provider does the user use for hosting?",
-        expected="Unknown / not mentioned",
-        why_matters="Should NOT hallucinate 'Google Cloud' from Firebase mention",
-    ),
-    TestCase(
-        category="Abstention",
-        name="Don't invent salary",
-        messages=[
-            [
-                {"role": "user", "content": "I'm a senior engineer at Stripe on the payments API team."},
-                {"role": "assistant", "content": "Stripe's payments API is world-class!"},
-            ],
-        ],
-        question="What is the user's salary?",
-        expected="Unknown / not mentioned",
-        why_matters="Should NOT guess salary from title + company",
+        question="Are Harnoor and Katie engaged or married?",
+        expected="Unknown / not mentioned — buying a car is the biggest commitment mentioned",
+        why_matters="Should NOT infer engagement/marriage from buying a car together",
     ),
 ]
 
