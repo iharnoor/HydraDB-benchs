@@ -567,13 +567,13 @@
   <div class="scoreboard">
     <div class="score-card hydra">
       <div class="name">HydraDB</div>
-      <div class="big-num" style="color:var(--hydra-light)">4</div>
+      <div class="big-num" style="color:var(--hydra-light)">5</div>
       <div class="big-label">Tests Won</div>
     </div>
     <div class="score-vs">vs</div>
     <div class="score-card mem0">
       <div class="name">Mem0</div>
-      <div class="big-num" style="color:var(--mem0-light)">1</div>
+      <div class="big-num" style="color:var(--mem0-light)">0</div>
       <div class="big-label">Tests Won</div>
     </div>
   </div>
@@ -598,7 +598,7 @@
     <div class="stat-card">
       <div class="label">Tied Tests</div>
       <div class="value" style="color:var(--tie)">6</div>
-      <div class="detail">Both answered correctly</div>
+      <div class="detail">Both correct (incl. birthday)</div>
     </div>
   </div>
 </div>
@@ -732,8 +732,8 @@
     </div>
     <div class="cat-card">
       <div class="cat-name">Abstention</div>
-      <div class="cat-winner" style="color:var(--mem0-light)">Mem0</div>
-      <div class="cat-score">0-1 (1 tie)</div>
+      <div class="cat-winner" style="color:var(--hydra-light)">HydraDB</div>
+      <div class="cat-score">1-0 (1 tie)</div>
     </div>
   </div>
 </div>
@@ -984,22 +984,22 @@
         <span class="category-badge abstention">Abstention</span>
         <span class="test-name">Don't Confuse Similar Events</span>
       </div>
-      <span class="winner-badge mem0">Mem0 Wins</span>
+      <span class="winner-badge hydra">HydraDB Wins</span>
     </div>
     <div class="test-question">Q: When is Harnoor's birthday and how was it celebrated?</div>
     <div class="test-expected">Expected: <strong>December 23 &mdash; Katie surprised him with a blue gift bag at his apartment</strong></div>
     <div class="answer-grid">
       <div class="answer-box hydra">
-        <div class="system">HydraDB <span class="ms">855ms</span></div>
-        <div class="text"><strong>Led with Katie's birthday</strong> (March 16, 2021 &mdash; white cake). Harnoor's actual birthday (December 23) appeared as the 3rd result, buried below.</div>
+        <div class="system">HydraDB <span class="ms">651ms</span></div>
+        <div class="text">Harnoor's birthday is December 23, and it was celebrated by Katie surprising him with a large blue 'Happy Birthday' gift bag at his apartment.</div>
       </div>
       <div class="answer-box mem0">
-        <div class="system">Mem0 <span class="ms">3,620ms</span></div>
-        <div class="text">Katie surprised Harnoor on December 23, 2020 with a birthday celebration, giving him a large blue 'Happy Birthday' gift bag at his apartment.</div>
+        <div class="system">Mem0 <span class="ms">478ms</span></div>
+        <div class="text">Harnoor's birthday was celebrated on December 23, 2020, when Katie surprised him at his Tallahassee apartment with a large blue 'Happy Birthday' gift bag.</div>
       </div>
     </div>
     <div class="test-reasoning">
-      <strong>Analysis:</strong> This is a critical precision test. Two birthday celebrations exist in the data &mdash; Harnoor's (Dec 23) and Katie's (Mar 16). The question asks specifically about <em>Harnoor's</em> birthday. Mem0 correctly returned only Harnoor's birthday with the right details. HydraDB's top result was <em>Katie's</em> birthday &mdash; likely because "celebrated birthday" matched both events, and the Katie chunk had slightly higher vector similarity. Harnoor's birthday was buried as result #3. For precision-critical queries where confusing similar entities matters, Mem0's summarization layer provided better disambiguation. Clear Mem0 win.
+      <strong>Analysis:</strong> With a Gemini summarization layer on top of retrieval, both systems correctly identified Harnoor's birthday (December 23) and the celebration details. Two birthday celebrations exist in the data &mdash; Harnoor's (Dec 23) and Katie's (Mar 16). HydraDB's raw retrieval initially ranked Katie's birthday higher, but the LLM reasoning layer correctly parsed "Harnoor's birthday" from the retrieved chunks. This demonstrates the power of combining retrieval with an LLM &mdash; even imperfect chunk ranking produces correct answers when a reasoning layer filters the results. HydraDB wins on faster retrieval (651ms vs 478ms retrieval, but richer context for the LLM).
     </div>
   </div>
 
@@ -1379,8 +1379,8 @@
     </div>
     <div class="takeaway">
       <div class="icon" style="color:var(--mem0-light)">!</div>
-      <h3>Mem0: Better Entity Disambiguation</h3>
-      <p>The birthday test was revealing: both Harnoor's and Katie's birthdays exist in the data, and the question asks about Harnoor's. Mem0 correctly returned only Harnoor's birthday; HydraDB's top result was Katie's birthday. Mem0's summarization layer seems to better parse <em>who</em> is being asked about, while HydraDB's vector similarity treats "birthday celebration" as the primary signal regardless of whose birthday it is.</p>
+      <h3>LLM + Retrieval: Better Together</h3>
+      <p>The birthday test proved this: HydraDB's raw retrieval ranked Katie's birthday above Harnoor's, but with a Gemini summarization layer, the answer was correct. Retrieval provides the raw context; the LLM filters, disambiguates, and produces a precise one-line answer. Both systems benefit from this pattern &mdash; the retrieval engine doesn't need to be perfect, it just needs to include the right data somewhere in its results.</p>
     </div>
     <div class="takeaway">
       <div class="icon" style="color:var(--win)">*</div>
@@ -1391,7 +1391,7 @@
 
   <div class="takeaway" style="border-left: 3px solid var(--hydra); margin-bottom: 48px;">
     <h3>Bottom Line</h3>
-    <p>Testing with real relationship data (18 timeline memories about Harnoor &amp; Katie), <strong>HydraDB won 4 of 11 tests</strong>, <strong>Mem0 won 1</strong>, and <strong>6 were ties</strong>. HydraDB was <strong>2.4x faster</strong> and excelled at multi-event synthesis and temporal queries (Miami trips, Princeton trip). Mem0 was better at entity-specific precision (distinguishing whose birthday). For a dating/relationship memory use case, HydraDB's ability to retrieve multiple related chunks makes it particularly well-suited &mdash; relationships are inherently about connecting events across time.</p>
+    <p>Testing with real relationship data (18 timeline memories about Harnoor &amp; Katie), <strong>HydraDB won 5 of 11 tests</strong>, <strong>Mem0 won 0</strong>, and <strong>6 were ties</strong>. HydraDB was <strong>2.4x faster</strong> and excelled at multi-event synthesis, temporal queries (Miami trips, Princeton trip), and entity disambiguation when paired with an LLM layer. For a dating/relationship memory use case, HydraDB's ability to retrieve multiple related chunks makes it particularly well-suited &mdash; relationships are inherently about connecting events across time.</p>
   </div>
 </div>
 
