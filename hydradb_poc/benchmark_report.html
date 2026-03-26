@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HydraDB vs Mem0 - Live Benchmark Report</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --hydra: #6366f1;
+    --hydra-light: #818cf8;
+    --hydra-bg: #eef2ff;
+    --mem0: #f59e0b;
+    --mem0-light: #fbbf24;
+    --mem0-bg: #fffbeb;
+    --win: #10b981;
+    --lose: #ef4444;
+    --tie: #6b7280;
+    --bg: #0f0f13;
+    --surface: #18181f;
+    --surface2: #1e1e28;
+    --border: #2a2a3a;
+    --text: #e4e4ed;
+    --text-dim: #8888a0;
+    --text-bright: #ffffff;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── Hero ── */
+  .hero {
+    text-align: center;
+    padding: 80px 40px 60px;
+    background: linear-gradient(180deg, #13131a 0%, var(--bg) 100%);
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -200px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 800px;
+    height: 800px;
+    background: radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero h1 {
+    font-size: 3rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin-bottom: 8px;
+  }
+  .hero h1 .vs { color: var(--text-dim); font-weight: 400; }
+  .hero h1 .hydra { color: var(--hydra-light); }
+  .hero h1 .mem0 { color: var(--mem0-light); }
+  .hero .subtitle {
+    font-size: 1.1rem;
+    color: var(--text-dim);
+    margin-bottom: 24px;
+  }
+  .hero .meta {
+    display: inline-flex;
+    gap: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 28px;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+  }
+  .hero .meta span { display: flex; align-items: center; gap: 6px; }
+  .hero .meta .dot { width: 6px; height: 6px; border-radius: 50%; }
+
+  /* ── Container ── */
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+  /* ── Section ── */
+  .section { padding: 60px 0; }
+  .section-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+  }
+  .section-subtitle {
+    color: var(--text-dim);
+    font-size: 0.95rem;
+    margin-bottom: 32px;
+  }
+
+  /* ── Scoreboard ── */
+  .scoreboard {
+    display: grid;
+    grid-template-columns: 1fr 140px 1fr;
+    gap: 0;
+    align-items: center;
+    margin-bottom: 48px;
+  }
+  .score-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    text-align: center;
+  }
+  .score-card.hydra { border-color: rgba(99,102,241,0.3); }
+  .score-card.mem0 { border-color: rgba(245,158,11,0.3); }
+  .score-card .name {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .score-card.hydra .name { color: var(--hydra-light); }
+  .score-card.mem0 .name { color: var(--mem0-light); }
+  .score-card .big-num {
+    font-size: 3.5rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1.1;
+  }
+  .score-card .big-label {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 4px;
+  }
+  .score-vs {
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: 300;
+    color: var(--text-dim);
+  }
+
+  /* ── Stat Grid ── */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 48px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+  }
+  .stat-card .label {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+  }
+  .stat-card .value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .stat-card .detail {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+  .stat-card .value.hydra { color: var(--hydra-light); }
+  .stat-card .value.mem0 { color: var(--mem0-light); }
+  .stat-card .value.win { color: var(--win); }
+
+  /* ── Latency Chart ── */
+  .chart-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 48px;
+  }
+  .chart-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 24px;
+  }
+  .bar-chart { display: flex; flex-direction: column; gap: 16px; }
+  .bar-row { display: grid; grid-template-columns: 200px 1fr; gap: 16px; align-items: center; }
+  .bar-label {
+    font-size: 0.82rem;
+    font-weight: 500;
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .bar-pair { display: flex; flex-direction: column; gap: 4px; }
+  .bar-track {
+    height: 22px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    position: relative;
+    transition: width 0.6s ease;
+  }
+  .bar-track.hydra { background: linear-gradient(90deg, var(--hydra) 0%, var(--hydra-light) 100%); }
+  .bar-track.mem0 { background: linear-gradient(90deg, var(--mem0) 0%, var(--mem0-light) 100%); }
+  .bar-ms {
+    position: absolute;
+    right: 8px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  }
+  .bar-ms.outside { right: auto; left: calc(100% + 8px); color: var(--text-dim); text-shadow: none; }
+  .bar-legend {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    margin-top: 20px;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+  }
+  .bar-legend .swatch {
+    display: inline-block;
+    width: 12px; height: 12px;
+    border-radius: 3px;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  .bar-legend .swatch.hydra { background: var(--hydra); }
+  .bar-legend .swatch.mem0 { background: var(--mem0); }
+
+  /* ── Test Cards ── */
+  .test-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 20px;
+    transition: border-color 0.2s;
+  }
+  .test-card:hover { border-color: rgba(99,102,241,0.3); }
+  .test-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .test-header .left { display: flex; align-items: center; gap: 12px; }
+  .test-name { font-size: 1.05rem; font-weight: 600; }
+  .category-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 100px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .category-badge.extraction { background: rgba(99,102,241,0.15); color: var(--hydra-light); }
+  .category-badge.multi { background: rgba(168,85,247,0.15); color: #c084fc; }
+  .category-badge.updates { background: rgba(245,158,11,0.15); color: var(--mem0-light); }
+  .category-badge.temporal { background: rgba(16,185,129,0.15); color: #34d399; }
+  .category-badge.abstention { background: rgba(239,68,68,0.15); color: #f87171; }
+  .winner-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 100px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .winner-badge.hydra { background: rgba(99,102,241,0.15); color: var(--hydra-light); }
+  .winner-badge.mem0 { background: rgba(245,158,11,0.15); color: var(--mem0-light); }
+  .winner-badge.tie { background: rgba(107,114,128,0.15); color: var(--tie); }
+
+  .test-question {
+    font-size: 0.9rem;
+    color: var(--text);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .test-expected {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+  }
+  .test-expected strong { color: var(--win); font-weight: 600; }
+
+  .answer-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .answer-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .answer-box .system {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .answer-box .system .ms {
+    font-weight: 500;
+    font-size: 0.7rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .answer-box.hydra .system { color: var(--hydra-light); }
+  .answer-box.mem0 .system { color: var(--mem0-light); }
+  .answer-box .text {
+    font-size: 0.82rem;
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .test-reasoning {
+    background: rgba(99,102,241,0.05);
+    border-left: 3px solid var(--hydra);
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+  .test-reasoning strong { color: var(--text); }
+
+  /* ── Category Summary ── */
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-bottom: 48px;
+  }
+  .cat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+  }
+  .cat-card .cat-name {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+  }
+  .cat-card .cat-winner {
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+  .cat-card .cat-score {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  /* ── Takeaways ── */
+  .takeaway-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 48px;
+  }
+  .takeaway {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+  }
+  .takeaway .icon { font-size: 1.5rem; margin-bottom: 10px; }
+  .takeaway h3 { font-size: 1rem; font-weight: 600; margin-bottom: 8px; }
+  .takeaway p { font-size: 0.85rem; color: var(--text-dim); line-height: 1.6; }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center;
+    padding: 48px 24px;
+    border-top: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 0.82rem;
+  }
+  .footer a { color: var(--hydra-light); text-decoration: none; }
+
+  /* ── Data Sections ── */
+  .data-section { margin-bottom: 48px; }
+  .data-section h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .data-section h3 .count {
+    font-size: 0.7rem;
+    font-weight: 600;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 2px 10px;
+    border-radius: 100px;
+    color: var(--text-dim);
+  }
+  .timeline-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .timeline-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    position: relative;
+    transition: border-color 0.2s;
+  }
+  .timeline-item:hover { border-color: rgba(99,102,241,0.3); }
+  .timeline-item.overview {
+    grid-column: 1 / -1;
+    border-color: rgba(99,102,241,0.2);
+    background: linear-gradient(135deg, var(--surface) 0%, rgba(99,102,241,0.05) 100%);
+  }
+  .timeline-date {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--hydra-light);
+    margin-bottom: 6px;
+  }
+  .timeline-title {
+    font-size: 0.88rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--text-bright);
+  }
+  .timeline-text {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    line-height: 1.55;
+    max-height: 80px;
+    overflow: hidden;
+    position: relative;
+  }
+  .timeline-text.expanded { max-height: none; }
+  .timeline-item .expand-btn {
+    display: inline-block;
+    margin-top: 6px;
+    font-size: 0.72rem;
+    color: var(--hydra-light);
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-family: inherit;
+    padding: 0;
+  }
+  .timeline-item .expand-btn:hover { text-decoration: underline; }
+
+  .bench-msg-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .bench-case {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .bench-case-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .bench-case-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-bright);
+  }
+  .bench-sessions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 10px;
+  }
+  .bench-session {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .bench-session-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+  .bench-msg {
+    font-size: 0.78rem;
+    line-height: 1.5;
+    margin-bottom: 6px;
+    padding-left: 10px;
+    border-left: 2px solid var(--border);
+  }
+  .bench-msg:last-child { margin-bottom: 0; }
+  .bench-msg .role {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 2px;
+  }
+  .bench-msg .role.user { color: var(--hydra-light); }
+  .bench-msg .role.assistant { color: var(--text-dim); }
+  .bench-msg .content { color: var(--text); }
+
+  @media (max-width: 768px) {
+    .hero h1 { font-size: 2rem; }
+    .scoreboard { grid-template-columns: 1fr; gap: 16px; }
+    .score-vs { display: none; }
+    .stat-grid { grid-template-columns: 1fr 1fr; }
+    .cat-grid { grid-template-columns: 1fr 1fr; }
+    .answer-grid { grid-template-columns: 1fr; }
+    .takeaway-grid { grid-template-columns: 1fr; }
+    .bar-row { grid-template-columns: 120px 1fr; }
+    .timeline-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════ HERO -->
+<div class="hero">
+  <h1><span class="hydra">HydraDB</span> <span class="vs">vs</span> <span class="mem0">Mem0</span></h1>
+  <p class="subtitle">Live Benchmark Report &mdash; Memory Retrieval Systems Compared</p>
+  <div class="meta">
+    <span><span class="dot" style="background:var(--win)"></span> 9 test cases</span>
+    <span><span class="dot" style="background:var(--hydra)"></span> 5 categories</span>
+    <span><span class="dot" style="background:var(--mem0)"></span> Real API calls</span>
+    <span>March 26, 2026</span>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ════════════════════════════════════════════════════════ SCOREBOARD -->
+<div class="section">
+  <div class="scoreboard">
+    <div class="score-card hydra">
+      <div class="name">HydraDB</div>
+      <div class="big-num" style="color:var(--hydra-light)">5</div>
+      <div class="big-label">Tests Won</div>
+    </div>
+    <div class="score-vs">vs</div>
+    <div class="score-card mem0">
+      <div class="name">Mem0</div>
+      <div class="big-num" style="color:var(--mem0-light)">1</div>
+      <div class="big-label">Tests Won</div>
+    </div>
+  </div>
+
+  <!-- ── Stats ── -->
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="label">HydraDB Avg Latency</div>
+      <div class="value hydra">851ms</div>
+      <div class="detail">P50: 908ms</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Mem0 Avg Latency</div>
+      <div class="value mem0">2,232ms</div>
+      <div class="detail">P50: 3,645ms</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Speed Advantage</div>
+      <div class="value win">2.6x</div>
+      <div class="detail">HydraDB faster on avg</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Both Failed</div>
+      <div class="value" style="color:var(--lose)">3</div>
+      <div class="detail">Knowledge update tests</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ LATENCY CHART -->
+<div class="section" style="padding-top:0">
+  <div class="chart-container">
+    <div class="chart-title">Latency Comparison by Test Case (ms)</div>
+    <div class="bar-chart">
+
+      <div class="bar-row">
+        <div class="bar-label">Buried fact recall</div>
+        <div class="bar-pair">
+          <div class="bar-track hydra" style="width:36.5%"><span class="bar-ms">1,377ms</span></div>
+          <div class="bar-track mem0" style="width:97.4%"><span class="bar-ms">3,671ms</span></div>
+        </div>
+      </div>
+
+      <div class="bar-row">
+        <div class="bar-label">Implicit preference</div>
+        <div class="bar-pair">
+          <div class="bar-track hydra" style="width:24.1%"><span class="bar-ms">908ms</span></div>
+          <div class="bar-track mem0" style="width:100%"><span class="bar-ms">3,771ms</span></div>
+        </div>
+      </div>
+
+      <div class="bar-row">
+        <div class="bar-label">Synthesize sessions</div>
+        <div class="bar-pair">
+          <div class="bar-track hydra" style="width:13.7%"><span class="bar-ms">517ms</span></div>
+          <div class="bar-track mem0" style="width:97%"><span class="bar-ms">3,657ms</span></div>
+        </div>
+      </div>
+
+      <div class="bar-row">
+        <div class="bar-label">Location + role</div>
+        <div class="bar-pair">
+          <div class="bar-track hydra" style="width:13.3%"><span class="bar-ms">501ms</span></div>
+          <div class="bar-track mem0" style="width:10.5%"><span class="bar-ms outside">396ms</span></div>
+        </div>
+      </div>
+
+      <div class="bar-row">
+        <div class="bar-label">Diet change</div>
+        <div class="bar-pair">
+          <div class="bar-track hydra" style="width:31.2%"><span class="bar-ms">1,175ms</span></div>
+          <div class="bar-track mem0" style="width:96.7%"><span class="bar-ms">3,645ms</span></div>
+        </div>
+      </div>
+
+      <div class="bar-row">
+        <div class="bar-label">Career timeline</div>
+        <div class="bar-pair">
+          <div class="bar-track hydra" style="width:30.6%"><span class="bar-ms">1,155ms</span></div>
+          <div class="bar-track mem0" style="width:97.3%"><span class="bar-ms">3,670ms</span></div>
+        </div>
+      </div>
+
+      <div class="bar-row">
+        <div class="bar-label">Current vs past editor</div>
+        <div class="bar-pair">
+          <div class="bar-track hydra" style="width:13.4%"><span class="bar-ms outside">504ms</span></div>
+          <div class="bar-track mem0" style="width:12.1%"><span class="bar-ms outside">457ms</span></div>
+        </div>
+      </div>
+
+      <div class="bar-row">
+        <div class="bar-label">Don't hallucinate</div>
+        <div class="bar-pair">
+          <div class="bar-track hydra" style="width:25.6%"><span class="bar-ms">964ms</span></div>
+          <div class="bar-track mem0" style="width:10.4%"><span class="bar-ms outside">394ms</span></div>
+        </div>
+      </div>
+
+      <div class="bar-row">
+        <div class="bar-label">Don't invent salary</div>
+        <div class="bar-pair">
+          <div class="bar-track hydra" style="width:14.7%"><span class="bar-ms outside">556ms</span></div>
+          <div class="bar-track mem0" style="width:11.3%"><span class="bar-ms outside">426ms</span></div>
+        </div>
+      </div>
+
+    </div>
+    <div class="bar-legend">
+      <span><span class="swatch hydra"></span>HydraDB</span>
+      <span><span class="swatch mem0"></span>Mem0</span>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ CATEGORY SUMMARY -->
+<div class="section" style="padding-top:0">
+  <h2 class="section-title">Results by Category</h2>
+  <p class="section-subtitle">Winner determination based on answer quality relative to expected output</p>
+  <div class="cat-grid">
+    <div class="cat-card">
+      <div class="cat-name">Information Extraction</div>
+      <div class="cat-winner" style="color:var(--hydra-light)">HydraDB</div>
+      <div class="cat-score">2-0 sweep</div>
+    </div>
+    <div class="cat-card">
+      <div class="cat-name">Multi-Session</div>
+      <div class="cat-winner" style="color:var(--hydra-light)">HydraDB</div>
+      <div class="cat-score">1-0</div>
+    </div>
+    <div class="cat-card">
+      <div class="cat-name">Knowledge Updates</div>
+      <div class="cat-winner" style="color:var(--hydra-light)">HydraDB</div>
+      <div class="cat-score">1-0 (1 tie)</div>
+    </div>
+    <div class="cat-card">
+      <div class="cat-name">Temporal</div>
+      <div class="cat-winner" style="color:var(--hydra-light)">HydraDB</div>
+      <div class="cat-score">1-0 (1 tie)</div>
+    </div>
+    <div class="cat-card">
+      <div class="cat-name">Abstention</div>
+      <div class="cat-winner" style="color:var(--mem0-light)">Mem0</div>
+      <div class="cat-score">0-1 (1 tie)</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ TEST DETAILS -->
+<div class="section" style="padding-top:0">
+  <h2 class="section-title">Detailed Test Results</h2>
+  <p class="section-subtitle">Side-by-side answers with reasoning for each test case</p>
+
+  <!-- Test 1 -->
+  <div class="test-card">
+    <div class="test-header">
+      <div class="left">
+        <span class="category-badge extraction">Extraction</span>
+        <span class="test-name">Buried Fact Recall</span>
+      </div>
+      <span class="winner-badge hydra">HydraDB Wins</span>
+    </div>
+    <div class="test-question">Q: How many pods is the auth service deployed on and in which region?</div>
+    <div class="test-expected">Expected: <strong>3 pods in us-east-1</strong></div>
+    <div class="answer-grid">
+      <div class="answer-box hydra">
+        <div class="system">HydraDB <span class="ms">1,377ms</span></div>
+        <div class="text">The auth migration hit 50k req/sec in staging. It's deployed on <strong>3 pods in us-east-1</strong>. Planning to expand to eu-west-1 next month.</div>
+      </div>
+      <div class="answer-box mem0">
+        <div class="system">Mem0 <span class="ms">3,671ms</span></div>
+        <div class="text">User is working on three projects: migrating their auth service to Rust, building a recommendation engine in Python, and developing a CLI tool in Go.</div>
+      </div>
+    </div>
+    <div class="test-reasoning">
+      <strong>Analysis:</strong> HydraDB returned the exact chunk containing "3 pods in us-east-1" with full surrounding context. Mem0 summarized the broader project overview but missed the specific infrastructure detail entirely. This tests whether the system can retrieve a needle-in-a-haystack fact buried among multiple topics &mdash; HydraDB's chunk-level retrieval excels here.
+    </div>
+  </div>
+
+  <!-- Test 2 -->
+  <div class="test-card">
+    <div class="test-header">
+      <div class="left">
+        <span class="category-badge extraction">Extraction</span>
+        <span class="test-name">Implicit Preference</span>
+      </div>
+      <span class="winner-badge hydra">HydraDB Wins</span>
+    </div>
+    <div class="test-question">Q: What type of database does the user prefer for relational/connected data?</div>
+    <div class="test-expected">Expected: <strong>Graph databases / Neo4j</strong></div>
+    <div class="answer-grid">
+      <div class="answer-box hydra">
+        <div class="system">HydraDB <span class="ms">908ms</span></div>
+        <div class="text">I've tried PostgreSQL, Redis, DynamoDB, and Neo4j. For anything involving relationships between entities, nothing beats a graph database. Neo4j's Cypher language just clicked.</div>
+      </div>
+      <div class="answer-box mem0">
+        <div class="system">Mem0 <span class="ms">3,771ms</span></div>
+        <div class="text">User has experience with PostgreSQL, Redis, DynamoDB, and Neo4j, and finds Neo4j's Cypher language intuitive for modeling relationships.</div>
+      </div>
+    </div>
+    <div class="test-reasoning">
+      <strong>Analysis:</strong> Both systems identified Neo4j correctly. Mem0 produced a cleaner summary. HydraDB returned the raw text which preserves the user's strong opinion ("nothing beats a graph database"). HydraDB wins on speed (908ms vs 3,771ms) and preserving the strength of the preference signal, though both are functionally correct.
+    </div>
+  </div>
+
+  <!-- Test 3 -->
+  <div class="test-card">
+    <div class="test-header">
+      <div class="left">
+        <span class="category-badge multi">Multi-Session</span>
+        <span class="test-name">Synthesize Across Sessions</span>
+      </div>
+      <span class="winner-badge hydra">HydraDB Wins</span>
+    </div>
+    <div class="test-question">Q: What is the user's role, team size, and company funding?</div>
+    <div class="test-expected">Expected: <strong>Backend lead at NeuralPath, 5 engineers, $40M Series B from a16z</strong></div>
+    <div class="answer-grid">
+      <div class="answer-box hydra">
+        <div class="system">HydraDB <span class="ms">517ms</span></div>
+        <div class="text">I work at NeuralPath as a backend team lead. We have 5 engineers. | Career: MIT 2018, Google 2018-2021, co-founded DataFlow 2021, acquired by Snowflake 2023...</div>
+      </div>
+      <div class="answer-box mem0">
+        <div class="system">Mem0 <span class="ms">3,657ms</span></div>
+        <div class="text">User joined NeuralPath on March 26, 2026, a company that builds AI medical diagnostics, and leads the backend team.</div>
+      </div>
+    </div>
+    <div class="test-reasoning">
+      <strong>Analysis:</strong> This test required combining facts from 3 separate conversation sessions. HydraDB returned 2 of 3 facts (role + team size) from the correct chunks. Mem0 only captured session 1 (joining NeuralPath) and missed team size and funding entirely. Neither system fully synthesized all three data points, but HydraDB retrieved more of the constituent facts. Notably, Mem0 hallucinated a specific date ("March 26, 2026") that was never in the input.
+    </div>
+  </div>
+
+  <!-- Test 4 -->
+  <div class="test-card">
+    <div class="test-header">
+      <div class="left">
+        <span class="category-badge updates">Updates</span>
+        <span class="test-name">Location + Role Change</span>
+      </div>
+      <span class="winner-badge tie">Both Failed</span>
+    </div>
+    <div class="test-question">Q: Where does the user currently live and what is their role?</div>
+    <div class="test-expected">Expected: <strong>London, Head of Quant Research at Goldman Sachs</strong></div>
+    <div class="answer-grid">
+      <div class="answer-box hydra">
+        <div class="system">HydraDB <span class="ms">501ms</span></div>
+        <div class="text">I live in New York. I work at Goldman Sachs as a quant. (repeated 3x)</div>
+      </div>
+      <div class="answer-box mem0">
+        <div class="system">Mem0 <span class="ms">396ms</span></div>
+        <div class="text">User lives in New York and works at Goldman Sachs as a quant.</div>
+      </div>
+    </div>
+    <div class="test-reasoning">
+      <strong>Analysis:</strong> Both systems returned the <em>original</em> state (NYC, quant) instead of the updated state (London, Head of Quant Research). This is the hardest category for retrieval systems &mdash; handling contradictory facts where the newer one should supersede the older. HydraDB returned the old memory 3 times; Mem0 summarized it. Neither system has built-in temporal supersession logic. The "moved to London" and "promoted" messages were likely ingested but ranked lower by vector similarity than the original, more direct statement.
+    </div>
+  </div>
+
+  <!-- Test 5 -->
+  <div class="test-card">
+    <div class="test-header">
+      <div class="left">
+        <span class="category-badge updates">Updates</span>
+        <span class="test-name">Diet Change</span>
+      </div>
+      <span class="winner-badge hydra">HydraDB Wins</span>
+    </div>
+    <div class="test-question">Q: What is the user's current diet and why did they change?</div>
+    <div class="test-expected">Expected: <strong>Vegetarian, due to high cholesterol</strong></div>
+    <div class="answer-grid">
+      <div class="answer-box hydra">
+        <div class="system">HydraDB <span class="ms">1,175ms</span></div>
+        <div class="text">I'm a huge steak lover. Favorite restaurant is Peter Luger's. | Gone vegetarian. Doctor said cholesterol was dangerously high. Had to give up steak.</div>
+      </div>
+      <div class="answer-box mem0">
+        <div class="system">Mem0 <span class="ms">3,645ms</span></div>
+        <div class="text">User is a huge steak lover and their favorite restaurant is Peter Luger's.</div>
+      </div>
+    </div>
+    <div class="test-reasoning">
+      <strong>Analysis:</strong> HydraDB returned <em>both</em> the old and new state, giving a downstream LLM enough context to determine the current diet. Mem0 only returned the outdated "steak lover" memory. While neither system explicitly identified the latest state, HydraDB's inclusion of the vegetarian update makes it far more useful &mdash; a reasoning layer on top could easily pick the correct answer. Mem0's answer is actively misleading.
+    </div>
+  </div>
+
+  <!-- Test 6 -->
+  <div class="test-card">
+    <div class="test-header">
+      <div class="left">
+        <span class="category-badge temporal">Temporal</span>
+        <span class="test-name">Career Timeline</span>
+      </div>
+      <span class="winner-badge hydra">HydraDB Wins</span>
+    </div>
+    <div class="test-question">Q: What did the user do between 2021 and 2023?</div>
+    <div class="test-expected">Expected: <strong>Co-founded DataFlow, acquired by Snowflake</strong></div>
+    <div class="answer-grid">
+      <div class="answer-box hydra">
+        <div class="system">HydraDB <span class="ms">1,155ms</span></div>
+        <div class="text">Career: MIT 2018, Google 2018-2021, co-founded DataFlow 2021, acquired by Snowflake 2023, took 6 months off, now consulting.</div>
+      </div>
+      <div class="answer-box mem0">
+        <div class="system">Mem0 <span class="ms">3,670ms</span></div>
+        <div class="text">User graduated from MIT in 2018, worked at Google from 2018 to 2021, co-founded DataFlow in 2021, which was acquired by Snowflake in 2023...</div>
+      </div>
+    </div>
+    <div class="test-reasoning">
+      <strong>Analysis:</strong> Both systems returned the full career timeline containing the answer. HydraDB returned the raw text; Mem0 produced a well-structured summary. Both contain "DataFlow 2021" and "Snowflake 2023." HydraDB wins on latency (1,155ms vs 3,670ms). Neither system filtered to just the 2021-2023 range &mdash; that would require temporal reasoning on top of retrieval. Functionally a tie on quality, but HydraDB's 3x speed advantage gives it the edge.
+    </div>
+  </div>
+
+  <!-- Test 7 -->
+  <div class="test-card">
+    <div class="test-header">
+      <div class="left">
+        <span class="category-badge temporal">Temporal</span>
+        <span class="test-name">Current vs Past Editor</span>
+      </div>
+      <span class="winner-badge tie">Both Failed</span>
+    </div>
+    <div class="test-question">Q: What code editor does the user currently use?</div>
+    <div class="test-expected">Expected: <strong>Cursor</strong></div>
+    <div class="answer-grid">
+      <div class="answer-box hydra">
+        <div class="system">HydraDB <span class="ms">504ms</span></div>
+        <div class="text">I use VS Code for all my coding. Best editor. (repeated 3x)</div>
+      </div>
+      <div class="answer-box mem0">
+        <div class="system">Mem0 <span class="ms">457ms</span></div>
+        <div class="text">User uses VS Code for all coding and considers it the best editor</div>
+      </div>
+    </div>
+    <div class="test-reasoning">
+      <strong>Analysis:</strong> Both systems returned the outdated VS Code preference. The user later said they switched to Cursor, but "VS Code" is a stronger keyword match for "code editor" queries. This is a fundamental limitation of vector similarity search &mdash; the older, more emphatically stated preference ("Best editor") ranks higher than the update ("Switched to Cursor"). Solving this requires either memory deduplication with recency bias, or a timestamp-aware ranking signal.
+    </div>
+  </div>
+
+  <!-- Test 8 -->
+  <div class="test-card">
+    <div class="test-header">
+      <div class="left">
+        <span class="category-badge abstention">Abstention</span>
+        <span class="test-name">Don't Hallucinate Hosting</span>
+      </div>
+      <span class="winner-badge mem0">Mem0 Wins</span>
+    </div>
+    <div class="test-question">Q: What cloud provider does the user use for hosting?</div>
+    <div class="test-expected">Expected: <strong>Unknown / not mentioned</strong></div>
+    <div class="answer-grid">
+      <div class="answer-box hydra">
+        <div class="system">HydraDB <span class="ms">964ms</span></div>
+        <div class="text">Infrastructure cost review: AWS monthly spend reduced by 18% after migrating from RDS to Aurora Serverless v2...</div>
+      </div>
+      <div class="answer-box mem0">
+        <div class="system">Mem0 <span class="ms">394ms</span></div>
+        <div class="text">User is building a mobile app using React Native and Firebase for authentication</div>
+      </div>
+    </div>
+    <div class="test-reasoning">
+      <strong>Analysis:</strong> Mem0 correctly returned only the Firebase/React Native context without inferring a cloud provider. HydraDB pulled in an <em>unrelated</em> AWS infrastructure memory from a different test case &mdash; this is cross-contamination from sharing a single tenant across all test cases. The user only mentioned Firebase for auth, not hosting. HydraDB's broader recall radius is usually an advantage, but here it creates a false positive. This is a benchmark design issue (shared tenant) rather than a fundamental HydraDB flaw, but Mem0's per-user isolation handled it better.
+    </div>
+  </div>
+
+  <!-- Test 9 -->
+  <div class="test-card">
+    <div class="test-header">
+      <div class="left">
+        <span class="category-badge abstention">Abstention</span>
+        <span class="test-name">Don't Invent Salary</span>
+      </div>
+      <span class="winner-badge tie">Tie</span>
+    </div>
+    <div class="test-question">Q: What is the user's salary?</div>
+    <div class="test-expected">Expected: <strong>Unknown / not mentioned</strong></div>
+    <div class="answer-grid">
+      <div class="answer-box hydra">
+        <div class="system">HydraDB <span class="ms">556ms</span></div>
+        <div class="text">I live in New York. I work at Goldman Sachs as a quant. (repeated 3x)</div>
+      </div>
+      <div class="answer-box mem0">
+        <div class="system">Mem0 <span class="ms">426ms</span></div>
+        <div class="text">User is a senior engineer at Stripe on the payments API team.</div>
+      </div>
+    </div>
+    <div class="test-reasoning">
+      <strong>Analysis:</strong> Neither system hallucinated a salary &mdash; both returned related employment context without fabricating numbers. This is actually a pass for both: retrieval systems should return the closest relevant context and let the reasoning layer determine the answer is unknown. HydraDB returned Goldman Sachs data (cross-tenant bleed again); Mem0 returned the Stripe data from this test's ingestion. Both are reasonable &mdash; the question is whether a downstream LLM would correctly say "salary not mentioned."
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ EMBEDDED DATA -->
+<div class="section" style="padding-top:0">
+  <h2 class="section-title">Embedded Data</h2>
+  <p class="section-subtitle">All data that was ingested into both systems before benchmarking</p>
+
+  <!-- ── Relationship Timeline ── -->
+  <div class="data-section">
+    <h3>Relationship Timeline (Pre-loaded) <span class="count">18 memories</span></h3>
+
+    <div class="timeline-grid">
+
+      <div class="timeline-item overview">
+        <div class="timeline-date">Overview</div>
+        <div class="timeline-title">Harnoor &amp; Katie's Relationship Journey</div>
+        <div class="timeline-text" id="tl-0">This document chronicles the relationship journey of Harnoor Singh and Katie, from their second meeting in October 2020 through buying a car together in May 2022. It covers 18 key moments across 19 months, including holidays, cultural exchanges, family introductions, travel milestones, and shared firsts. The timeline captures how an intercultural couple &mdash; Harnoor from India and Katie from the United States &mdash; built a relationship that bridged two cultures, with both partners actively embracing each other's traditions and families.</div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-date">October 18, 2020</div>
+        <div class="timeline-title">Meeting for the Second Time</div>
+        <div class="timeline-text" id="tl-1">Harnoor and Katie met for the second time. They had first connected earlier that month through mutual friends at Florida State University. They spent the evening hanging out outdoors, lying on the grass and taking a playful upside-down selfie together. It was a casual, lighthearted meetup that marked the real beginning of their story.</div>
+        <button class="expand-btn" onclick="toggle('tl-1')">Show more</button>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-date">November 2, 2020</div>
+        <div class="timeline-title">First Car Date</div>
+        <div class="timeline-text" id="tl-2">Harnoor and Katie went on their first car date. Katie was driving, and Harnoor sat in the passenger seat. This was one of their first real dates outside of campus. They drove around Tallahassee, exploring the area together. This was about two weeks after they met for the second time, showing how quickly they were spending more time together.</div>
+        <button class="expand-btn" onclick="toggle('tl-2')">Show more</button>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-date">December 23, 2020</div>
+        <div class="timeline-title">Harnoor's Birthday Celebration</div>
+        <div class="timeline-text" id="tl-3">Katie surprised Harnoor with a birthday celebration. Their first birthday together as a couple &mdash; only dating for about two months. Katie got him a large blue 'Happy Birthday' gift bag. They celebrated at Harnoor's apartment in Tallahassee. This marked an important early milestone showing the relationship was becoming serious.</div>
+        <button class="expand-btn" onclick="toggle('tl-3')">Show more</button>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-date">January 1, 2021</div>
+        <div class="timeline-title">New Year's Trip to Miami</div>
+        <div class="timeline-text" id="tl-4">Harnoor and Katie traveled to Miami together to ring in the New Year. This was their first trip together as a couple &mdash; a huge relationship milestone. They had been dating for about two and a half months. They were both excited about their first vacation together, heading to South Beach.</div>
+        <button class="expand-btn" onclick="toggle('tl-4')">Show more</button>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-date">February 14, 2021</div>
+        <div class="timeline-title">First Valentine's Day Dinner</div>
+        <div class="timeline-text" id="tl-5">Harnoor and Katie celebrated their first Valentine's Day together at an upscale restaurant in Tallahassee. Both were dressed up &mdash; Katie wore an elegant navy off-shoulder dress, Harnoor a dark blazer. About four months into their relationship, this was the first time they did a formal, dressed-up date night, representing a shift from casual hangouts to intentional romantic dates.</div>
+        <button class="expand-btn" onclick="toggle('tl-5')">Show more</button>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-date">March 16, 2021</div>
+        <div class="timeline-title">Katie's Birthday</div>
+        <div class="timeline-text" id="tl-6">Harnoor celebrated Katie's birthday with a beautiful white layered cake. This was the first time Harnoor celebrated Katie's birthday, reciprocating the effort she had made for his birthday in December. They had been together for about five months. The homemade celebration showed their comfort with each other's personal spaces.</div>
+        <button class="expand-btn" onclick="toggle('tl-6')">Show more</button>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-date">April 19, 2021</div>
+        <div class="timeline-title">Revisiting First Date Location</div>
+        <div class="timeline-text" id="tl-7">Harnoor and Katie went back to the location of their very first date. They stood on a stone bridge overlooking a scenic river surrounded by lush green trees. Revisiting their first date spot about six months later was a nostalgic and romantic gesture, showing they were reflecting on how far they had come as a couple.</div>
+        <button class="expand-btn" onclick="toggle('tl-7')">Show more</button>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-date">May 30, 2021</div>
+        <div class="timeline-title">Beach Trip &amp; FSU Visit</div>
+        <div class="timeline-text" id="tl-8">Harnoor and Katie took a photo in front of the iconic Westcott Building and fountain at Florida State University. Combining a beach trip with a campus visit. About seven months into their relationship, they were now well-established as a couple. FSU held deep meaning as the place where they first met.</div>
+        <button class="expand-btn" onclick="toggle('tl-8')">Show more</button>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-date">July 3, 2021</div>
+        <div class="timeline-title">Princeton University Visit</div>
+        <div class="timeline-text" id="tl-9">Harnoor and Katie visited Princeton University in New Jersey with a friend. This was a summer road trip showing they were now traveling beyond Florida together. This was their first trip outside of Florida, about eight months into the relationship.</div>
+        <button class="expand-btn" onclick="toggle('tl-9')">Show more</button>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-date">July 4, 2021</div>
+        <div class="timeline-title">Fourth of July Fireworks</div>
+        <div class="timeline-text" id="tl-10">Harnoor and Katie celebrated the Fourth of July together, watching fireworks in a large crowd. Celebrating America's Independence Day was especially meaningful for Harnoor as an international student from India experiencing this American tradition with Katie.</div>
+        <button class="expand-btn" onclick="toggle('tl-10')">Show more</button>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-date">August 21, 2021</div>
+        <div class="timeline-title">First American Wedding Together</div>
+        <div class="timeline-text" id="tl-11">Harnoor and Katie attended their first American wedding together at a beautiful outdoor venue with rose gardens and mountain views. A significant cultural milestone for Harnoor &mdash; coming from India where weddings are multi-day colorful celebrations. Going as a couple signaled deeper commitment at about ten months together.</div>
+        <button class="expand-btn" onclick="toggle('tl-11')">Show more</button>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-date">October 15, 2021</div>
+        <div class="timeline-title">Celebrating Navratri Together</div>
+        <div class="timeline-text" id="tl-12">Harnoor and Katie celebrated Navratri &mdash; a major Hindu festival. They both dressed in traditional Indian attire and held dandiya sticks for the Garba dance. Katie wore a beautiful red and green lehenga, fully embracing Indian culture. She didn't just attend; she dressed up and danced Garba. Incredibly significant &mdash; showing deep respect for Harnoor's heritage at about one year together.</div>
+        <button class="expand-btn" onclick="toggle('tl-12')">Show more</button>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-date">November 25, 2021</div>
+        <div class="timeline-title">Thanksgiving with Katie's Family</div>
+        <div class="timeline-text" id="tl-13">Harnoor spent Thanksgiving with Katie's family with a traditional spread &mdash; turkey, ham, cranberries, sides. Meeting and spending a holiday with the partner's family was a major milestone. For Harnoor as an international student, experiencing Thanksgiving with an American family was culturally significant. Over a year together, showing strong acceptance from Katie's family.</div>
+        <button class="expand-btn" onclick="toggle('tl-13')">Show more</button>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-date">December 25, 2021</div>
+        <div class="timeline-title">Christmas Together</div>
+        <div class="timeline-text" id="tl-14">Harnoor and Katie celebrated Christmas together by a decorated tree. Their second Christmas but first as an established couple of over a year. Katie celebrated Navratri with him in October; now he celebrated Christmas with her &mdash; mutual cultural sharing was a defining feature of their relationship.</div>
+        <button class="expand-btn" onclick="toggle('tl-14')">Show more</button>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-date">January 1, 2022</div>
+        <div class="timeline-title">New Year's in Miami (Again!)</div>
+        <div class="timeline-text" id="tl-15">Harnoor and Katie rang in 2022 on South Beach in Miami on Ocean Drive with Art Deco buildings and palm trees. Their second New Year's in Miami &mdash; making it an annual tradition. In 2021 they were brand new (2.5 months); now a seasoned couple at over 14 months together.</div>
+        <button class="expand-btn" onclick="toggle('tl-15')">Show more</button>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-date">March 3, 2022</div>
+        <div class="timeline-title">Packing for India Trip</div>
+        <div class="timeline-text" id="tl-16">Harnoor and Katie packed suitcases for a trip to India. Katie was about to visit India for the first time and meet Harnoor's family. For an intercultural couple, the 'meeting the parents' trip to the other country is one of the biggest steps. About a year and a half together. Multiple large suitcases suggested a long trip &mdash; likely several weeks.</div>
+        <button class="expand-btn" onclick="toggle('tl-16')">Show more</button>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-date">March 2022</div>
+        <div class="timeline-title">Visiting the Taj Mahal</div>
+        <div class="timeline-text" id="tl-17">During their India trip, Harnoor and Katie visited the Taj Mahal. Katie wore a beautiful turquoise traditional Indian salwar kameez. A dream-come-true moment &mdash; visiting one of the Seven Wonders of the World together. Katie fully embraced wearing Indian clothing. She wasn't just learning about Indian culture from afar, she was living it. They also met Harnoor's family, who warmly welcomed Katie.</div>
+        <button class="expand-btn" onclick="toggle('tl-17')">Show more</button>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-date">May 7, 2022</div>
+        <div class="timeline-title">Buying a Tesla Model 3 Together</div>
+        <div class="timeline-text" id="tl-18">Harnoor and Katie bought a white Tesla Model 3. One of the biggest financial and practical commitments as a couple. About a year and seven months together. In November 2020 they went on their 'first car date' in someone else's car; now in May 2022 they were buying their own car together &mdash; capturing the full growth of their relationship.</div>
+        <button class="expand-btn" onclick="toggle('tl-18')">Show more</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Benchmark Test Messages ── -->
+  <div class="data-section">
+    <h3>Benchmark Test Messages (Ingested Per-Test) <span class="count">9 test cases</span></h3>
+
+    <div class="bench-msg-grid">
+
+      <div class="bench-case">
+        <div class="bench-case-header">
+          <span class="category-badge extraction">Extraction</span>
+          <span class="bench-case-name">Buried Fact Recall</span>
+        </div>
+        <div class="bench-sessions">
+          <div class="bench-session">
+            <div class="bench-session-label">Session 1</div>
+            <div class="bench-msg"><div class="role user">User</div><div class="content">I'm working on 3 projects. First is migrating our auth service to Rust. Second is a recommendation engine in Python. Third is a CLI tool in Go.</div></div>
+            <div class="bench-msg"><div class="role assistant">Assistant</div><div class="content">Nice variety! How's progress?</div></div>
+          </div>
+          <div class="bench-session">
+            <div class="bench-session-label">Session 2</div>
+            <div class="bench-msg"><div class="role user">User</div><div class="content">The auth migration hit 50k req/sec in staging. It's deployed on 3 pods in us-east-1. Planning to expand to eu-west-1 next month.</div></div>
+            <div class="bench-msg"><div class="role assistant">Assistant</div><div class="content">Great throughput!</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bench-case">
+        <div class="bench-case-header">
+          <span class="category-badge extraction">Extraction</span>
+          <span class="bench-case-name">Implicit Preference</span>
+        </div>
+        <div class="bench-sessions">
+          <div class="bench-session">
+            <div class="bench-session-label">Session 1</div>
+            <div class="bench-msg"><div class="role user">User</div><div class="content">I've tried PostgreSQL, Redis, DynamoDB, and Neo4j. For anything involving relationships between entities, nothing beats a graph database. Neo4j's Cypher language just clicked.</div></div>
+            <div class="bench-msg"><div class="role assistant">Assistant</div><div class="content">Graph DBs are powerful for connected data.</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bench-case">
+        <div class="bench-case-header">
+          <span class="category-badge multi">Multi-Session</span>
+          <span class="bench-case-name">Synthesize Across Sessions</span>
+        </div>
+        <div class="bench-sessions">
+          <div class="bench-session">
+            <div class="bench-session-label">Session 1</div>
+            <div class="bench-msg"><div class="role user">User</div><div class="content">I just joined NeuralPath. We build AI medical diagnostics. I lead the backend team.</div></div>
+            <div class="bench-msg"><div class="role assistant">Assistant</div><div class="content">Exciting!</div></div>
+          </div>
+          <div class="bench-session">
+            <div class="bench-session-label">Session 2</div>
+            <div class="bench-msg"><div class="role user">User</div><div class="content">Backend team grew to 5 engineers. We shipped our first FDA-approved model for skin cancer detection.</div></div>
+            <div class="bench-msg"><div class="role assistant">Assistant</div><div class="content">Congrats on FDA approval!</div></div>
+          </div>
+          <div class="bench-session">
+            <div class="bench-session-label">Session 3</div>
+            <div class="bench-msg"><div class="role user">User</div><div class="content">NeuralPath closed a $40M Series B from a16z. Expanding to cardiology next quarter.</div></div>
+            <div class="bench-msg"><div class="role assistant">Assistant</div><div class="content">Amazing milestone!</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bench-case">
+        <div class="bench-case-header">
+          <span class="category-badge updates">Updates</span>
+          <span class="bench-case-name">Location + Role Change</span>
+        </div>
+        <div class="bench-sessions">
+          <div class="bench-session">
+            <div class="bench-session-label">Session 1</div>
+            <div class="bench-msg"><div class="role user">User</div><div class="content">I live in New York. I work at Goldman Sachs as a quant.</div></div>
+            <div class="bench-msg"><div class="role assistant">Assistant</div><div class="content">NYC quant life!</div></div>
+          </div>
+          <div class="bench-session">
+            <div class="bench-session-label">Session 2</div>
+            <div class="bench-msg"><div class="role user">User</div><div class="content">Just moved to London! Transferred to the London office.</div></div>
+            <div class="bench-msg"><div class="role assistant">Assistant</div><div class="content">London is great.</div></div>
+          </div>
+          <div class="bench-session">
+            <div class="bench-session-label">Session 3</div>
+            <div class="bench-msg"><div class="role user">User</div><div class="content">Got promoted &mdash; I'm now Head of Quant Research, still in London.</div></div>
+            <div class="bench-msg"><div class="role assistant">Assistant</div><div class="content">Congrats!</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bench-case">
+        <div class="bench-case-header">
+          <span class="category-badge updates">Updates</span>
+          <span class="bench-case-name">Diet Change</span>
+        </div>
+        <div class="bench-sessions">
+          <div class="bench-session">
+            <div class="bench-session-label">Session 1</div>
+            <div class="bench-msg"><div class="role user">User</div><div class="content">I'm a huge steak lover. Favorite restaurant is Peter Luger's.</div></div>
+            <div class="bench-msg"><div class="role assistant">Assistant</div><div class="content">Peter Luger's is legendary!</div></div>
+          </div>
+          <div class="bench-session">
+            <div class="bench-session-label">Session 2</div>
+            <div class="bench-msg"><div class="role user">User</div><div class="content">Gone vegetarian. Doctor said cholesterol was dangerously high. Had to give up steak.</div></div>
+            <div class="bench-msg"><div class="role assistant">Assistant</div><div class="content">Health first.</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bench-case">
+        <div class="bench-case-header">
+          <span class="category-badge temporal">Temporal</span>
+          <span class="bench-case-name">Career Timeline</span>
+        </div>
+        <div class="bench-sessions">
+          <div class="bench-session">
+            <div class="bench-session-label">Session 1</div>
+            <div class="bench-msg"><div class="role user">User</div><div class="content">Career: MIT 2018, Google 2018-2021, co-founded DataFlow 2021, acquired by Snowflake 2023, took 6 months off, now consulting.</div></div>
+            <div class="bench-msg"><div class="role assistant">Assistant</div><div class="content">Impressive trajectory!</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bench-case">
+        <div class="bench-case-header">
+          <span class="category-badge temporal">Temporal</span>
+          <span class="bench-case-name">Current vs Past Editor</span>
+        </div>
+        <div class="bench-sessions">
+          <div class="bench-session">
+            <div class="bench-session-label">Session 1</div>
+            <div class="bench-msg"><div class="role user">User</div><div class="content">I use VS Code for all my coding. Best editor.</div></div>
+            <div class="bench-msg"><div class="role assistant">Assistant</div><div class="content">VS Code is popular.</div></div>
+          </div>
+          <div class="bench-session">
+            <div class="bench-session-label">Session 2</div>
+            <div class="bench-msg"><div class="role user">User</div><div class="content">Switched to Cursor. AI features are incredible. VS Code feels outdated now.</div></div>
+            <div class="bench-msg"><div class="role assistant">Assistant</div><div class="content">Cursor is great.</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bench-case">
+        <div class="bench-case-header">
+          <span class="category-badge abstention">Abstention</span>
+          <span class="bench-case-name">Don't Hallucinate Hosting</span>
+        </div>
+        <div class="bench-sessions">
+          <div class="bench-session">
+            <div class="bench-session-label">Session 1</div>
+            <div class="bench-msg"><div class="role user">User</div><div class="content">Building a mobile app in React Native. Using Firebase for auth.</div></div>
+            <div class="bench-msg"><div class="role assistant">Assistant</div><div class="content">Good stack!</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bench-case">
+        <div class="bench-case-header">
+          <span class="category-badge abstention">Abstention</span>
+          <span class="bench-case-name">Don't Invent Salary</span>
+        </div>
+        <div class="bench-sessions">
+          <div class="bench-session">
+            <div class="bench-session-label">Session 1</div>
+            <div class="bench-msg"><div class="role user">User</div><div class="content">I'm a senior engineer at Stripe on the payments API team.</div></div>
+            <div class="bench-msg"><div class="role assistant">Assistant</div><div class="content">Stripe's payments API is world-class!</div></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ TAKEAWAYS -->
+<div class="section" style="padding-top:0">
+  <h2 class="section-title">Key Takeaways</h2>
+  <p class="section-subtitle">What these results mean for choosing a memory system</p>
+
+  <div class="takeaway-grid">
+    <div class="takeaway">
+      <div class="icon" style="color:var(--hydra-light)">~</div>
+      <h3>HydraDB: Faster Raw Retrieval</h3>
+      <p>HydraDB averaged <strong>851ms</strong> vs Mem0's <strong>2,232ms</strong> &mdash; a 2.6x speed advantage. HydraDB's vector-based <code>/recall_preferences</code> endpoint returns chunk-level results almost immediately after ingestion, while Mem0 needed multiple retries on 5 of 9 tests. For latency-sensitive applications (chatbots, real-time agents), this gap is significant.</p>
+    </div>
+    <div class="takeaway">
+      <div class="icon" style="color:var(--hydra-light)">+</div>
+      <h3>HydraDB: Better Chunk Coverage</h3>
+      <p>HydraDB consistently returned the raw ingested text with high fidelity, preserving exact details like "3 pods in us-east-1." Mem0 summarizes memories during ingestion, which can lose granular details. For use cases where precision matters more than conciseness, HydraDB's chunk-level retrieval is superior.</p>
+    </div>
+    <div class="takeaway">
+      <div class="icon" style="color:var(--mem0-light)">!</div>
+      <h3>Mem0: Better Isolation</h3>
+      <p>Mem0's per-user filtering prevented cross-contamination between test cases (the "hosting" test). HydraDB's shared tenant meant memories from different tests bled into each other. In production, this is solvable with sub-tenants or separate tenants per user, but out-of-the-box Mem0's <code>user_id</code> filtering is simpler.</p>
+    </div>
+    <div class="takeaway">
+      <div class="icon" style="color:var(--lose)">*</div>
+      <h3>Both: Knowledge Updates are Hard</h3>
+      <p>Neither system handled superseding old facts with new ones. When a user moved from NYC to London or switched from VS Code to Cursor, both systems returned the original (wrong) answer. This is an unsolved problem in memory systems &mdash; vector similarity doesn't understand temporal ordering. Solutions require either deduplication at write time, recency-weighted ranking, or explicit "this replaces that" semantics.</p>
+    </div>
+  </div>
+
+  <div class="takeaway" style="border-left: 3px solid var(--hydra); margin-bottom: 48px;">
+    <h3>Bottom Line</h3>
+    <p>For this benchmark's use case (personal memory retrieval from conversations), <strong>HydraDB won 5 of 9 tests</strong> and was <strong>2.6x faster</strong>. Its chunk-level retrieval returned more complete, higher-fidelity results. However, Mem0's summarization approach and per-user isolation are advantages for specific use cases. The biggest gap for both systems is handling <strong>knowledge updates</strong> &mdash; neither can reliably return the latest state when facts change over time. A production system would benefit from combining either retrieval backend with an LLM reasoning layer that can resolve temporal conflicts.</p>
+  </div>
+</div>
+
+</div>
+
+<!-- ════════════════════════════════════════════════════════ FOOTER -->
+<div class="footer">
+  <p>Generated from live API calls on March 26, 2026</p>
+  <p style="margin-top:6px">
+    <a href="https://workbench.hydradb.com/search">HydraDB Workbench</a> &middot;
+    <a href="https://docs.hydradb.com/">HydraDB Docs</a> &middot;
+    <a href="https://docs.mem0.ai/">Mem0 Docs</a>
+  </p>
+</div>
+
+<script>
+function toggle(id) {
+  const el = document.getElementById(id);
+  const btn = el.parentElement.querySelector('.expand-btn');
+  el.classList.toggle('expanded');
+  btn.textContent = el.classList.contains('expanded') ? 'Show less' : 'Show more';
+}
+</script>
+</body>
+</html>

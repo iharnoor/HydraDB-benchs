@@ -1,0 +1,213 @@
+{
+  "timestamp": "2026-03-25 12:04:55",
+  "total_questions": 15,
+  "categories": {
+    "Information Extraction": {
+      "count": 3,
+      "hydra_avg_latency_ms": 2268,
+      "mem0_avg_latency_ms": 397
+    },
+    "Multi-Fact Reasoning": {
+      "count": 3,
+      "hydra_avg_latency_ms": 2220,
+      "mem0_avg_latency_ms": 348
+    },
+    "Temporal Reasoning": {
+      "count": 4,
+      "hydra_avg_latency_ms": 1950,
+      "mem0_avg_latency_ms": 266
+    },
+    "Knowledge Updates": {
+      "count": 2,
+      "hydra_avg_latency_ms": 1945,
+      "mem0_avg_latency_ms": 362
+    },
+    "Abstention": {
+      "count": 3,
+      "hydra_avg_latency_ms": 1829,
+      "mem0_avg_latency_ms": 284
+    }
+  },
+  "results": [
+    {
+      "category": "Information Extraction",
+      "question": "When and where did Harnoor and Katie first meet?",
+      "expected": "They first connected in early October 2020 through mutual friends at Florida State University. Their second meeting was on October 18, 2020.",
+      "why_hard": "The 'first meeting' is referenced indirectly in the second meeting entry. A system must infer the first connection happened earlier in October 2020.",
+      "hydra_answer": "I couldn't find any relevant information in the indexed sources to answer your question. Please try rephrasing your question or ensure the relevant documents have been indexed.",
+      "hydra_latency_ms": 2557,
+      "hydra_sources": 0,
+      "mem0_answer": "- Harnoor and Katie celebrated their first Valentine's Day together on February 14, 2021 at an upscale Tallahassee restaurant, where Harnoor wore a dark blazer over a black shirt and Katie wore an elegant navy off\u2011shoulder dress, marking their first formal, dressed\u2011up date night about four months into their relationship. (score: 0.900)\n- Harnoor and Katie met for the second time on October 18, 2020, early in their relationship, hanging out outdoors on grass and taking a playful upside-down selfie, and at that time neither had a car so they had to plan transportation around Tallahassee. (score: 0.818)\n- Harnoor and Katie had their first beach trip to FSU on May 30, 2021, taking a photo in front of the Westcott Building and fountain; they were seven months into their relationship, with FSU as the place where they first met. (score: 0.750)\n- Harnoor and Katie revisited their first date spot on April 19, 2021, standing on a stone bridge over a scenic river in Tallahassee, wearing a maroon FSU T-shirt and light blue jacket for Harnoor and a green striped top for Katie, as a special sentimental gesture during spring in Florida. (score: 0.692)\n- On December 23, 2020, Katie surprised Harnoor with a birthday celebration at his apartment in Tallahassee, giving him a large blue 'Happy Birthday' gift bag; it was their first birthday together as a couple after about two months of dating, marking an early milestone in their serious relationship. (score: 0.643)",
+      "mem0_latency_ms": 652,
+      "mem0_sources": 9
+    },
+    {
+      "category": "Information Extraction",
+      "question": "What kind of car did Harnoor and Katie buy together and when?",
+      "expected": "A white Tesla Model 3, purchased on May 7, 2022.",
+      "why_hard": "Straightforward extraction, but the system must locate the specific entry among 18 events.",
+      "hydra_answer": "I couldn't find any relevant information in the indexed sources to answer your question. Please try rephrasing your question or ensure the relevant documents have been indexed.",
+      "hydra_latency_ms": 1993,
+      "hydra_sources": 0,
+      "mem0_answer": "- Harnoor Singh (India) and Katie (USA) had a journey from their second meeting in October 2020 to buying a car together in May 2022, covering 18 over 19 months that included holidays, cultural exchanges, family introductions, travel milestones, with partners embracing each other's traditions and families. (score: 0.900)\n- Harnoor and Katie had their first car date on November 2, 2020, with Katie driving and Harnoor in the passenger seat, driving around Tallahassee and seeing the Synovus bank building; it was a meaningful moment as one of their first real dates outside campus, and they were both FSU students. (score: 0.818)\n- Harnoor and Katie met for the second time on October 18, 2020, early in their relationship, hanging out outdoors on grass and taking a playful upside-down selfie, and at that time neither had a car so they had to plan transportation around Tallahassee. (score: 0.750)\n- Harnoor and Katie traveled together to Miami on January 1, 2021 for a New Year's trip, marking their first vacation as a couple after dating for about two and a half months. (score: 0.692)\n- On December 23, 2020, Katie surprised Harnoor with a birthday celebration at his apartment in Tallahassee, giving him a large blue 'Happy Birthday' gift bag; it was their first birthday together as a couple after about two months of dating, marking an early milestone in their serious relationship. (score: 0.643)",
+      "mem0_latency_ms": 256,
+      "mem0_sources": 10
+    },
+    {
+      "category": "Information Extraction",
+      "question": "What was Katie wearing when they visited the Taj Mahal?",
+      "expected": "A beautiful turquoise traditional Indian salwar kameez.",
+      "why_hard": "Requires finding the specific Taj Mahal entry and extracting a detail about clothing, not the main event.",
+      "hydra_answer": "I couldn't find any relevant information in the indexed sources to answer your question. Please try rephrasing your question or ensure the relevant documents have been indexed.",
+      "hydra_latency_ms": 2254,
+      "hydra_sources": 0,
+      "mem0_answer": "- Harnoor and Katie revisited their first date spot on April 19, 2021, standing on a stone bridge over a scenic river in Tallahassee, wearing a maroon FSU T-shirt and light blue jacket for Harnoor and a green striped top for Katie, as a special sentimental gesture during spring in Florida. (score: 0.900)\n- Harnoor and Katie met for the second time on October 18, 2020, early in their relationship, hanging out outdoors on grass and taking a playful upside-down selfie, and at that time neither had a car so they had to plan transportation around Tallahassee. (score: 0.818)\n- On December 23, 2020, Katie surprised Harnoor with a birthday celebration at his apartment in Tallahassee, giving him a large blue 'Happy Birthday' gift bag; it was their first birthday together as a couple after about two months of dating, marking an early milestone in their serious relationship. (score: 0.750)\n- Harnoor celebrated Katie's birthday on March 16, 2021 at her family home or a friend's house, giving her a white layered cake with chocolate and cream decorations; it was their first time celebrating each other's birthdays and they had been together for about five months. (score: 0.692)\n- Harnoor and Katie had their first car date on November 2, 2020, with Katie driving and Harnoor in the passenger seat, driving around Tallahassee and seeing the Synovus bank building; it was a meaningful moment as one of their first real dates outside campus, and they were both FSU students. (score: 0.643)",
+      "mem0_latency_ms": 282,
+      "mem0_sources": 10
+    },
+    {
+      "category": "Multi-Fact Reasoning",
+      "question": "How many times did Katie wear traditional Indian clothing, and on what occasions?",
+      "expected": "Twice: (1) Navratri celebration on October 15, 2021 - she wore a red and green lehenga with dandiya sticks, and (2) at the Taj Mahal in March 2022 - she wore a turquoise salwar kameez.",
+      "why_hard": "Requires scanning across ALL entries and connecting two separate events where Katie wore Indian clothing. A vector search for 'Indian clothing' might only return one of the two.",
+      "hydra_answer": "I couldn't find any relevant information in the indexed sources to answer your question. Please try rephrasing your question or ensure the relevant documents have been indexed.",
+      "hydra_latency_ms": 2173,
+      "hydra_sources": 0,
+      "mem0_answer": "- Harnoor and Katie revisited their first date spot on April 19, 2021, standing on a stone bridge over a scenic river in Tallahassee, wearing a maroon FSU T-shirt and light blue jacket for Harnoor and a green striped top for Katie, as a special sentimental gesture during spring in Florida. (score: 0.900)\n- Harnoor and Katie met for the second time on October 18, 2020, early in their relationship, hanging out outdoors on grass and taking a playful upside-down selfie, and at that time neither had a car so they had to plan transportation around Tallahassee. (score: 0.818)\n- Harnoor Singh (India) and Katie (USA) had a journey from their second meeting in October 2020 to buying a car together in May 2022, covering 18 over 19 months that included holidays, cultural exchanges, family introductions, travel milestones, with partners embracing each other's traditions and families. (score: 0.750)\n- Harnoor and Katie had their first car date on November 2, 2020, with Katie driving and Harnoor in the passenger seat, driving around Tallahassee and seeing the Synovus bank building; it was a meaningful moment as one of their first real dates outside campus, and they were both FSU students. (score: 0.692)\n- Harnoor celebrated Katie's birthday on March 16, 2021 at her family home or a friend's house, giving her a white layered cake with chocolate and cream decorations; it was their first time celebrating each other's birthdays and they had been together for about five months. (score: 0.643)",
+      "mem0_latency_ms": 413,
+      "mem0_sources": 10
+    },
+    {
+      "category": "Multi-Fact Reasoning",
+      "question": "Which holidays did Harnoor and Katie celebrate together in 2021?",
+      "expected": "New Year's (Jan 1 in Miami), Valentine's Day (Feb 14), Fourth of July (Jul 4), Navratri (Oct 15), Thanksgiving (Nov 25), and Christmas (Dec 25).",
+      "why_hard": "Requires aggregating 6 separate entries filtered to 2021. A basic vector search for 'holidays 2021' may only surface 1-2 of the 6.",
+      "hydra_answer": "I couldn't find any relevant information in the indexed sources to answer your question. Please try rephrasing your question or ensure the relevant documents have been indexed.",
+      "hydra_latency_ms": 2173,
+      "hydra_sources": 0,
+      "mem0_answer": "- Harnoor and Katie traveled together to Miami on January 1, 2021 for a New Year's trip, marking their first vacation as a couple after dating for about two and a half months. (score: 0.900)\n- Harnoor Singh (India) and Katie (USA) had a journey from their second meeting in October 2020 to buying a car together in May 2022, covering 18 over 19 months that included holidays, cultural exchanges, family introductions, travel milestones, with partners embracing each other's traditions and families. (score: 0.818)\n- Harnoor celebrated Katie's birthday on March 16, 2021 at her family home or a friend's house, giving her a white layered cake with chocolate and cream decorations; it was their first time celebrating each other's birthdays and they had been together for about five months. (score: 0.750)\n- On December 23, 2020, Katie surprised Harnoor with a birthday celebration at his apartment in Tallahassee, giving him a large blue 'Happy Birthday' gift bag; it was their first birthday together as a couple after about two months of dating, marking an early milestone in their serious relationship. (score: 0.692)\n- Harnoor and Katie celebrated their first Valentine's Day together on February 14, 2021 at an upscale Tallahassee restaurant, where Harnoor wore a dark blazer over a black shirt and Katie wore an elegant navy off\u2011shoulder dress, marking their first formal, dressed\u2011up date night about four months into their relationship. (score: 0.643)",
+      "mem0_latency_ms": 297,
+      "mem0_sources": 10
+    },
+    {
+      "category": "Multi-Fact Reasoning",
+      "question": "How did the cultural exchange progress in the relationship? Give examples from both sides.",
+      "expected": "It was mutual and progressive: Katie embraced Indian culture by celebrating Navratri in traditional attire (Oct 2021), visiting India and wearing Indian clothing at the Taj Mahal (Mar 2022). Harnoor embraced American culture by celebrating Thanksgiving with Katie's family (Nov 2021), Christmas (Dec 2021), Fourth of July fireworks (Jul 2021), and attending an American wedding (Aug 2021).",
+      "why_hard": "Requires synthesizing events from both cultural perspectives across the entire timeline. No single chunk contains this cross-cultural summary.",
+      "hydra_answer": "I couldn't find any relevant information in the indexed sources to answer your question. Please try rephrasing your question or ensure the relevant documents have been indexed.",
+      "hydra_latency_ms": 2313,
+      "hydra_sources": 0,
+      "mem0_answer": "- Harnoor Singh (India) and Katie (USA) had a journey from their second meeting in October 2020 to buying a car together in May 2022, covering 18 over 19 months that included holidays, cultural exchanges, family introductions, travel milestones, with partners embracing each other's traditions and families. (score: 0.900)\n- The dinner represented a shift from casual college hangouts to more intentional, romantic dates. (score: 0.818)\n- Harnoor and Katie had their first car date on November 2, 2020, with Katie driving and Harnoor in the passenger seat, driving around Tallahassee and seeing the Synovus bank building; it was a meaningful moment as one of their first real dates outside campus, and they were both FSU students. (score: 0.750)\n- Harnoor and Katie met for the second time on October 18, 2020, early in their relationship, hanging out outdoors on grass and taking a playful upside-down selfie, and at that time neither had a car so they had to plan transportation around Tallahassee. (score: 0.692)\n- Harnoor and Katie had their first beach trip to FSU on May 30, 2021, taking a photo in front of the Westcott Building and fountain; they were seven months into their relationship, with FSU as the place where they first met. (score: 0.643)",
+      "mem0_latency_ms": 335,
+      "mem0_sources": 10
+    },
+    {
+      "category": "Temporal Reasoning",
+      "question": "What events happened between July and December 2021?",
+      "expected": "July 3: Visited Princeton University. July 4: Fourth of July fireworks. August 21: First American wedding. October 15: Navratri celebration. November 25: Thanksgiving with Katie's family. December 25: Christmas together.",
+      "why_hard": "Requires filtering events by a specific 6-month time range. Vector similarity alone cannot filter by date range.",
+      "hydra_answer": "I couldn't find any relevant information in the indexed sources to answer your question. Please try rephrasing your question or ensure the relevant documents have been indexed.",
+      "hydra_latency_ms": 2051,
+      "hydra_sources": 0,
+      "mem0_answer": "- Harnoor and Katie traveled together to Miami on January 1, 2021 for a New Year's trip, marking their first vacation as a couple after dating for about two and a half months. (score: 0.900)\n- On December 23, 2020, Katie surprised Harnoor with a birthday celebration at his apartment in Tallahassee, giving him a large blue 'Happy Birthday' gift bag; it was their first birthday together as a couple after about two months of dating, marking an early milestone in their serious relationship. (score: 0.818)\n- Harnoor and Katie revisited their first date spot on April 19, 2021, standing on a stone bridge over a scenic river in Tallahassee, wearing a maroon FSU T-shirt and light blue jacket for Harnoor and a green striped top for Katie, as a special sentimental gesture during spring in Florida. (score: 0.750)\n- Harnoor celebrated Katie's birthday on March 16, 2021 at her family home or a friend's house, giving her a white layered cake with chocolate and cream decorations; it was their first time celebrating each other's birthdays and they had been together for about five months. (score: 0.692)\n- Harnoor Singh (India) and Katie (USA) had a journey from their second meeting in October 2020 to buying a car together in May 2022, covering 18 over 19 months that included holidays, cultural exchanges, family introductions, travel milestones, with partners embracing each other's traditions and families. (score: 0.643)",
+      "mem0_latency_ms": 306,
+      "mem0_sources": 10
+    },
+    {
+      "category": "Temporal Reasoning",
+      "question": "What was the very first trip they took outside of Florida, and when?",
+      "expected": "Their first trip outside Florida was to Princeton, New Jersey on July 3, 2021, about eight months into the relationship.",
+      "why_hard": "Requires understanding geography (Miami is in Florida, Princeton is not) and temporal ordering to find the FIRST out-of-state trip.",
+      "hydra_answer": "I couldn't find any relevant information in the indexed sources to answer your question. Please try rephrasing your question or ensure the relevant documents have been indexed.",
+      "hydra_latency_ms": 2062,
+      "hydra_sources": 0,
+      "mem0_answer": "- Harnoor and Katie had their first beach trip to FSU on May 30, 2021, taking a photo in front of the Westcott Building and fountain; they were seven months into their relationship, with FSU as the place where they first met. (score: 0.900)\n- Harnoor and Katie traveled together to Miami on January 1, 2021 for a New Year's trip, marking their first vacation as a couple after dating for about two and a half months. (score: 0.818)\n- Harnoor and Katie had their first car date on November 2, 2020, with Katie driving and Harnoor in the passenger seat, driving around Tallahassee and seeing the Synovus bank building; it was a meaningful moment as one of their first real dates outside campus, and they were both FSU students. (score: 0.750)\n- Harnoor and Katie revisited their first date spot on April 19, 2021, standing on a stone bridge over a scenic river in Tallahassee, wearing a maroon FSU T-shirt and light blue jacket for Harnoor and a green striped top for Katie, as a special sentimental gesture during spring in Florida. (score: 0.692)\n- Harnoor and Katie met for the second time on October 18, 2020, early in their relationship, hanging out outdoors on grass and taking a playful upside-down selfie, and at that time neither had a car so they had to plan transportation around Tallahassee. (score: 0.643)",
+      "mem0_latency_ms": 293,
+      "mem0_sources": 9
+    },
+    {
+      "category": "Temporal Reasoning",
+      "question": "How long were they dating before they first traveled internationally together?",
+      "expected": "About a year and a half. They started dating in October 2020 and traveled to India in March 2022 (approximately 17 months).",
+      "why_hard": "Requires calculating time duration between two events: relationship start and India trip. Also must know India trip is their first international travel.",
+      "hydra_answer": "I couldn't find any relevant information in the indexed sources to answer your question. Please try rephrasing your question or ensure the relevant documents have been indexed.",
+      "hydra_latency_ms": 1842,
+      "hydra_sources": 0,
+      "mem0_answer": "- Harnoor and Katie traveled together to Miami on January 1, 2021 for a New Year's trip, marking their first vacation as a couple after dating for about two and a half months. (score: 0.900)\n- Harnoor and Katie had their first beach trip to FSU on May 30, 2021, taking a photo in front of the Westcott Building and fountain; they were seven months into their relationship, with FSU as the place where they first met. (score: 0.818)\n- Harnoor and Katie had their first car date on November 2, 2020, with Katie driving and Harnoor in the passenger seat, driving around Tallahassee and seeing the Synovus bank building; it was a meaningful moment as one of their first real dates outside campus, and they were both FSU students. (score: 0.750)\n- Harnoor Singh (India) and Katie (USA) had a journey from their second meeting in October 2020 to buying a car together in May 2022, covering 18 over 19 months that included holidays, cultural exchanges, family introductions, travel milestones, with partners embracing each other's traditions and families. (score: 0.692)\n- Harnoor and Katie met for the second time on October 18, 2020, early in their relationship, hanging out outdoors on grass and taking a playful upside-down selfie, and at that time neither had a car so they had to plan transportation around Tallahassee. (score: 0.643)",
+      "mem0_latency_ms": 230,
+      "mem0_sources": 10
+    },
+    {
+      "category": "Temporal Reasoning",
+      "question": "Put these events in chronological order: buying the Tesla, visiting the Taj Mahal, first Valentine's Day, Navratri celebration, meeting for the second time.",
+      "expected": "1. Meeting for the second time (Oct 18, 2020), 2. First Valentine's Day (Feb 14, 2021), 3. Navratri celebration (Oct 15, 2021), 4. Visiting the Taj Mahal (Mar 2022), 5. Buying the Tesla (May 7, 2022).",
+      "why_hard": "Requires extracting dates from 5 different entries and sorting them. This is pure temporal reasoning that vector search cannot do.",
+      "hydra_answer": "I couldn't find any relevant information in the indexed sources to answer your question. Please try rephrasing your question or ensure the relevant documents have been indexed.",
+      "hydra_latency_ms": 1844,
+      "hydra_sources": 0,
+      "mem0_answer": "- Harnoor Singh (India) and Katie (USA) had a journey from their second meeting in October 2020 to buying a car together in May 2022, covering 18 over 19 months that included holidays, cultural exchanges, family introductions, travel milestones, with partners embracing each other's traditions and families. (score: 0.900)\n- Harnoor and Katie celebrated their first Valentine's Day together on February 14, 2021 at an upscale Tallahassee restaurant, where Harnoor wore a dark blazer over a black shirt and Katie wore an elegant navy off\u2011shoulder dress, marking their first formal, dressed\u2011up date night about four months into their relationship. (score: 0.818)\n- Harnoor and Katie met for the second time on October 18, 2020, early in their relationship, hanging out outdoors on grass and taking a playful upside-down selfie, and at that time neither had a car so they had to plan transportation around Tallahassee. (score: 0.750)\n- Harnoor and Katie had their first car date on November 2, 2020, with Katie driving and Harnoor in the passenger seat, driving around Tallahassee and seeing the Synovus bank building; it was a meaningful moment as one of their first real dates outside campus, and they were both FSU students. (score: 0.692)\n- On December 23, 2020, Katie surprised Harnoor with a birthday celebration at his apartment in Tallahassee, giving him a large blue 'Happy Birthday' gift bag; it was their first birthday together as a couple after about two months of dating, marking an early milestone in their serious relationship. (score: 0.643)",
+      "mem0_latency_ms": 237,
+      "mem0_sources": 10
+    },
+    {
+      "category": "Knowledge Updates",
+      "question": "How did their transportation situation change over the course of the relationship?",
+      "expected": "Initially (Oct 2020), neither had a car and getting around Tallahassee required planning. By Nov 2020 they were using someone's car for dates (first car date, Katie driving). By Jan 2021 they were flying to Miami. By May 2022 they bought their own car together - a white Tesla Model 3.",
+      "why_hard": "Requires tracking the evolution of a single attribute (transportation) across multiple time points. A graph database with temporal edges handles this naturally.",
+      "hydra_answer": "I couldn't find any relevant information in the indexed sources to answer your question. Please try rephrasing your question or ensure the relevant documents have been indexed.",
+      "hydra_latency_ms": 1886,
+      "hydra_sources": 0,
+      "mem0_answer": "- Harnoor and Katie met for the second time on October 18, 2020, early in their relationship, hanging out outdoors on grass and taking a playful upside-down selfie, and at that time neither had a car so they had to plan transportation around Tallahassee. (score: 0.900)\n- Harnoor and Katie had their first beach trip to FSU on May 30, 2021, taking a photo in front of the Westcott Building and fountain; they were seven months into their relationship, with FSU as the place where they first met. (score: 0.818)\n- Harnoor Singh (India) and Katie (USA) had a journey from their second meeting in October 2020 to buying a car together in May 2022, covering 18 over 19 months that included holidays, cultural exchanges, family introductions, travel milestones, with partners embracing each other's traditions and families. (score: 0.750)\n- Harnoor and Katie had their first car date on November 2, 2020, with Katie driving and Harnoor in the passenger seat, driving around Tallahassee and seeing the Synovus bank building; it was a meaningful moment as one of their first real dates outside campus, and they were both FSU students. (score: 0.692)\n- The dinner represented a shift from casual college hangouts to more intentional, romantic dates. (score: 0.643)",
+      "mem0_latency_ms": 415,
+      "mem0_sources": 10
+    },
+    {
+      "category": "Knowledge Updates",
+      "question": "How did the nature of their dates evolve from 2020 to 2022?",
+      "expected": "Started casual (lying on grass, car rides around town in late 2020), progressed to trips (Miami Jan 2021), formal dates (Valentine's dinner Feb 2021), then major milestones (wedding together Aug 2021, meeting family Nov 2021), international travel (India Mar 2022), and financial commitment (Tesla May 2022).",
+      "why_hard": "Requires understanding the progression arc across the entire timeline, not just retrieving individual events.",
+      "hydra_answer": "I couldn't find any relevant information in the indexed sources to answer your question. Please try rephrasing your question or ensure the relevant documents have been indexed.",
+      "hydra_latency_ms": 2003,
+      "hydra_sources": 0,
+      "mem0_answer": "- Harnoor Singh (India) and Katie (USA) had a journey from their second meeting in October 2020 to buying a car together in May 2022, covering 18 over 19 months that included holidays, cultural exchanges, family introductions, travel milestones, with partners embracing each other's traditions and families. (score: 0.900)\n- The dinner represented a shift from casual college hangouts to more intentional, romantic dates. (score: 0.818)\n- Harnoor and Katie had their first car date on November 2, 2020, with Katie driving and Harnoor in the passenger seat, driving around Tallahassee and seeing the Synovus bank building; it was a meaningful moment as one of their first real dates outside campus, and they were both FSU students. (score: 0.750)\n- Harnoor and Katie met for the second time on October 18, 2020, early in their relationship, hanging out outdoors on grass and taking a playful upside-down selfie, and at that time neither had a car so they had to plan transportation around Tallahassee. (score: 0.692)\n- On December 23, 2020, Katie surprised Harnoor with a birthday celebration at his apartment in Tallahassee, giving him a large blue 'Happy Birthday' gift bag; it was their first birthday together as a couple after about two months of dating, marking an early milestone in their serious relationship. (score: 0.643)",
+      "mem0_latency_ms": 308,
+      "mem0_sources": 10
+    },
+    {
+      "category": "Abstention",
+      "question": "When did Harnoor and Katie get engaged?",
+      "expected": "There is no information about an engagement in the timeline. The document covers October 2020 through May 2022, and no engagement is mentioned.",
+      "why_hard": "The system must recognize that engagement is never mentioned and say so, rather than hallucinating an answer from wedding-related context.",
+      "hydra_answer": "I couldn't find any relevant information in the indexed sources to answer your question. Please try rephrasing your question or ensure the relevant documents have been indexed.",
+      "hydra_latency_ms": 1676,
+      "hydra_sources": 0,
+      "mem0_answer": "- Harnoor and Katie celebrated their first Valentine's Day together on February 14, 2021 at an upscale Tallahassee restaurant, where Harnoor wore a dark blazer over a black shirt and Katie wore an elegant navy off\u2011shoulder dress, marking their first formal, dressed\u2011up date night about four months into their relationship. (score: 0.900)\n- Harnoor and Katie revisited their first date spot on April 19, 2021, standing on a stone bridge over a scenic river in Tallahassee, wearing a maroon FSU T-shirt and light blue jacket for Harnoor and a green striped top for Katie, as a special sentimental gesture during spring in Florida. (score: 0.818)\n- Harnoor and Katie met for the second time on October 18, 2020, early in their relationship, hanging out outdoors on grass and taking a playful upside-down selfie, and at that time neither had a car so they had to plan transportation around Tallahassee. (score: 0.750)\n- Harnoor celebrated Katie's birthday on March 16, 2021 at her family home or a friend's house, giving her a white layered cake with chocolate and cream decorations; it was their first time celebrating each other's birthdays and they had been together for about five months. (score: 0.692)\n- Harnoor and Katie had their first car date on November 2, 2020, with Katie driving and Harnoor in the passenger seat, driving around Tallahassee and seeing the Synovus bank building; it was a meaningful moment as one of their first real dates outside campus, and they were both FSU students. (score: 0.643)",
+      "mem0_latency_ms": 265,
+      "mem0_sources": 10
+    },
+    {
+      "category": "Abstention",
+      "question": "What are the names of Harnoor's parents?",
+      "expected": "The document does not mention Harnoor's parents' names. It only says they met Harnoor's family during the India trip in March 2022.",
+      "why_hard": "The India trip entry mentions meeting family but never names them. A system might hallucinate names or guess based on cultural assumptions.",
+      "hydra_answer": "I couldn't find any relevant information in the indexed sources to answer your question. Please try rephrasing your question or ensure the relevant documents have been indexed.",
+      "hydra_latency_ms": 1793,
+      "hydra_sources": 0,
+      "mem0_answer": "- On December 23, 2020, Katie surprised Harnoor with a birthday celebration at his apartment in Tallahassee, giving him a large blue 'Happy Birthday' gift bag; it was their first birthday together as a couple after about two months of dating, marking an early milestone in their serious relationship. (score: 0.900)\n- Harnoor and Katie had their first beach trip to FSU on May 30, 2021, taking a photo in front of the Westcott Building and fountain; they were seven months into their relationship, with FSU as the place where they first met. (score: 0.818)\n- Harnoor and Katie had their first car date on November 2, 2020, with Katie driving and Harnoor in the passenger seat, driving around Tallahassee and seeing the Synovus bank building; it was a meaningful moment as one of their first real dates outside campus, and they were both FSU students. (score: 0.750)\n- Harnoor and Katie met for the second time on October 18, 2020, early in their relationship, hanging out outdoors on grass and taking a playful upside-down selfie, and at that time neither had a car so they had to plan transportation around Tallahassee. (score: 0.692)\n- Harnoor celebrated Katie's birthday on March 16, 2021 at her family home or a friend's house, giving her a white layered cake with chocolate and cream decorations; it was their first time celebrating each other's birthdays and they had been together for about five months. (score: 0.600)",
+      "mem0_latency_ms": 238,
+      "mem0_sources": 9
+    },
+    {
+      "category": "Abstention",
+      "question": "Where did Katie go to school before FSU?",
+      "expected": "This information is not available in the timeline.",
+      "why_hard": "Katie's pre-FSU education is never mentioned. The system should not infer.",
+      "hydra_answer": "I couldn't find any relevant information in the indexed sources to answer your question. Please try rephrasing your question or ensure the relevant documents have been indexed.",
+      "hydra_latency_ms": 2017,
+      "hydra_sources": 0,
+      "mem0_answer": "- Harnoor and Katie had their first beach trip to FSU on May 30, 2021, taking a photo in front of the Westcott Building and fountain; they were seven months into their relationship, with FSU as the place where they first met. (score: 0.900)\n- Harnoor and Katie had their first car date on November 2, 2020, with Katie driving and Harnoor in the passenger seat, driving around Tallahassee and seeing the Synovus bank building; it was a meaningful moment as one of their first real dates outside campus, and they were both FSU students. (score: 0.818)\n- Harnoor and Katie revisited their first date spot on April 19, 2021, standing on a stone bridge over a scenic river in Tallahassee, wearing a maroon FSU T-shirt and light blue jacket for Harnoor and a green striped top for Katie, as a special sentimental gesture during spring in Florida. (score: 0.750)\n- Harnoor and Katie celebrated their first Valentine's Day together on February 14, 2021 at an upscale Tallahassee restaurant, where Harnoor wore a dark blazer over a black shirt and Katie wore an elegant navy off\u2011shoulder dress, marking their first formal, dressed\u2011up date night about four months into their relationship. (score: 0.692)\n- Harnoor and Katie met for the second time on October 18, 2020, early in their relationship, hanging out outdoors on grass and taking a playful upside-down selfie, and at that time neither had a car so they had to plan transportation around Tallahassee. (score: 0.643)",
+      "mem0_latency_ms": 350,
+      "mem0_sources": 10
+    }
+  ]
+}

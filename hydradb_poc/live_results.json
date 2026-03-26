@@ -1,0 +1,136 @@
+{
+  "summary": {
+    "mem0": {
+      "avg_latency_ms": 2232,
+      "p50_latency_ms": 3645,
+      "errors": 0,
+      "total": 9
+    },
+    "hydradb": {
+      "avg_latency_ms": 851,
+      "p50_latency_ms": 908,
+      "errors": 0,
+      "total": 9
+    }
+  },
+  "comparison": [
+    {
+      "category": "Information Extraction",
+      "name": "Buried fact recall",
+      "question": "How many pods is the auth service deployed on and in which region?",
+      "expected": "3 pods in us-east-1",
+      "mem0_answer": "User is working on three projects: migrating their auth service to Rust, building a recommendation engine in Python, and developing a CLI tool in Go.",
+      "mem0_latency_ms": 3671,
+      "mem0_error": "",
+      "hydra_answer": "The auth migration hit 50k req/sec in staging. It's deployed on 3 pods in us-east-1. Planning to expand to eu-west-1 next month. | The auth migration hit 50k req/sec in staging. It's deployed on 3 pods in us-east-1. Planning to expand to eu-west-1 next month. | The auth migration hit 50k req/sec in staging. It's deployed on 3 pods in us-east-1. Planning to expand to eu-west-1 next month.",
+      "hydra_latency_ms": 1377,
+      "hydra_error": "",
+      "why_matters": "Specific fact buried among many details"
+    },
+    {
+      "category": "Information Extraction",
+      "name": "Implicit preference",
+      "question": "What type of database does the user prefer for relational/connected data?",
+      "expected": "Graph databases / Neo4j",
+      "mem0_answer": "User has experience with PostgreSQL, Redis, DynamoDB, and Neo4j, and finds Neo4j's Cypher language intuitive for modeling relationships between entities.",
+      "mem0_latency_ms": 3771,
+      "mem0_error": "",
+      "hydra_answer": "I've tried PostgreSQL, Redis, DynamoDB, and Neo4j. For anything involving relationships between entities, nothing beats a graph database. Neo4j's Cyph | I've tried PostgreSQL, Redis, DynamoDB, and Neo4j. For anything involving relationships between entities, nothing beats a graph database. Neo4j's Cyph | I've tried PostgreSQL, Redis, DynamoDB, and Neo4j. For anything involving relationships between entities, nothing beats a graph database. Neo4j's Cyph",
+      "hydra_latency_ms": 908,
+      "hydra_error": "",
+      "why_matters": "Preference is implicit, not stated as 'I prefer X'"
+    },
+    {
+      "category": "Multi-Session Reasoning",
+      "name": "Synthesize across sessions",
+      "question": "What is the user's role, team size, and company funding?",
+      "expected": "Backend lead at NeuralPath, 5 engineers, $40M Series B from a16z",
+      "mem0_answer": "User joined NeuralPath on March 26, 2026, a company that builds AI medical diagnostics, and leads the backend team.",
+      "mem0_latency_ms": 3657,
+      "mem0_error": "",
+      "hydra_answer": "I work at NeuralPath as a backend team lead. We have 5 engineers. | Career: MIT 2018, Google 2018-2021, co-founded DataFlow 2021, acquired by Snowflake 2023, took 6 months off, now consulting. | Career: MIT 2018, Google 2018-2021, co-founded DataFlow 2021, acquired by Snowflake 2023, took 6 months off, now consulting.",
+      "hydra_latency_ms": 517,
+      "hydra_error": "",
+      "why_matters": "Requires combining facts from 3 separate sessions"
+    },
+    {
+      "category": "Knowledge Updates",
+      "name": "Location + role change",
+      "question": "Where does the user currently live and what is their role?",
+      "expected": "London, Head of Quant Research at Goldman Sachs",
+      "mem0_answer": "User lives in New York and works at Goldman Sachs as a quant.",
+      "mem0_latency_ms": 396,
+      "mem0_error": "",
+      "hydra_answer": "I live in New York. I work at Goldman Sachs as a quant. | I live in New York. I work at Goldman Sachs as a quant. | I live in New York. I work at Goldman Sachs as a quant.",
+      "hydra_latency_ms": 501,
+      "hydra_error": "",
+      "why_matters": "Must return LATEST state, not original NYC/quant"
+    },
+    {
+      "category": "Knowledge Updates",
+      "name": "Diet change",
+      "question": "What is the user's current diet and why did they change?",
+      "expected": "Vegetarian, due to high cholesterol",
+      "mem0_answer": "User is a huge steak lover and their favorite restaurant is Peter Luger's.",
+      "mem0_latency_ms": 3645,
+      "mem0_error": "",
+      "hydra_answer": "I'm a huge steak lover. Favorite restaurant is Peter Luger's. | Gone vegetarian. Doctor said cholesterol was dangerously high. Had to give up steak. | Gone vegetarian. Doctor said cholesterol was dangerously high. Had to give up steak.",
+      "hydra_latency_ms": 1175,
+      "hydra_error": "",
+      "why_matters": "Must return current state (vegetarian), not old (steak lover)"
+    },
+    {
+      "category": "Temporal Reasoning",
+      "name": "Career timeline",
+      "question": "What did the user do between 2021 and 2023?",
+      "expected": "Co-founded DataFlow, acquired by Snowflake",
+      "mem0_answer": "User graduated from MIT in 2018, worked at Google from 2018 to 2021, co-founded DataFlow in 2021, which was acquired by Snowflake in 2023, took a six-month break, and is currently consulting.",
+      "mem0_latency_ms": 3670,
+      "mem0_error": "",
+      "hydra_answer": "Career: MIT 2018, Google 2018-2021, co-founded DataFlow 2021, acquired by Snowflake 2023, took 6 months off, now consulting. | Career: MIT 2018, Google 2018-2021, co-founded DataFlow 2021, acquired by Snowflake 2023, took 6 months off, now consulting. | Career: MIT 2018, Google 2018-2021, co-founded DataFlow 2021, acquired by Snowflake 2023, took 6 months off, now consulting.",
+      "hydra_latency_ms": 1155,
+      "hydra_error": "",
+      "why_matters": "Must filter by time range, not just similarity"
+    },
+    {
+      "category": "Temporal Reasoning",
+      "name": "Current vs past editor",
+      "question": "What code editor does the user currently use?",
+      "expected": "Cursor",
+      "mem0_answer": "User uses VS Code for all coding and considers it the best editor",
+      "mem0_latency_ms": 457,
+      "mem0_error": "",
+      "hydra_answer": "I use VS Code for all my coding. Best editor. | I use VS Code for all my coding. Best editor. | I use VS Code for all my coding. Best editor.",
+      "hydra_latency_ms": 504,
+      "hydra_error": "",
+      "why_matters": "'VS Code' keyword-matches better but is outdated"
+    },
+    {
+      "category": "Abstention",
+      "name": "Don't hallucinate hosting",
+      "question": "What cloud provider does the user use for hosting?",
+      "expected": "Unknown / not mentioned",
+      "mem0_answer": "User is building a mobile app using React Native and Firebase for authentication",
+      "mem0_latency_ms": 394,
+      "mem0_error": "",
+      "hydra_answer": "Infrastructure cost review: AWS monthly spend reduced by 18% after migrating from RDS to Aurora Serverless v2. The biggest savings came from eliminati | The auth migration hit 50k req/sec in staging. It's deployed on 3 pods in us-east-1. Planning to expand to eu-west-1 next month. | The auth migration hit 50k req/sec in staging. It's deployed on 3 pods in us-east-1. Planning to expand to eu-west-1 next month.",
+      "hydra_latency_ms": 964,
+      "hydra_error": "",
+      "why_matters": "Should NOT hallucinate 'Google Cloud' from Firebase mention"
+    },
+    {
+      "category": "Abstention",
+      "name": "Don't invent salary",
+      "question": "What is the user's salary?",
+      "expected": "Unknown / not mentioned",
+      "mem0_answer": "User is a senior engineer at Stripe on the payments API team.",
+      "mem0_latency_ms": 426,
+      "mem0_error": "",
+      "hydra_answer": "I live in New York. I work at Goldman Sachs as a quant. | I live in New York. I work at Goldman Sachs as a quant. | I live in New York. I work at Goldman Sachs as a quant.",
+      "hydra_latency_ms": 556,
+      "hydra_error": "",
+      "why_matters": "Should NOT guess salary from title + company"
+    }
+  ],
+  "timestamp": "2026-03-26 12:17:51"
+}

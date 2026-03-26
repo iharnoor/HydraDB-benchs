@@ -1,0 +1,137 @@
+{
+  "categories": [
+    "Single-Session\n(User)",
+    "Single-Session\n(Assistant)",
+    "Single-Session\n(Preference)",
+    "Knowledge\nUpdates",
+    "Temporal\nReasoning",
+    "Multi-Session\nReasoning"
+  ],
+  "categories_clean": [
+    "Single-Session (User)",
+    "Single-Session (Assistant)",
+    "Single-Session (Preference)",
+    "Knowledge Updates",
+    "Temporal Reasoning",
+    "Multi-Session Reasoning"
+  ],
+  "systems": {
+    "HydraDB": [
+      100.0,
+      100.0,
+      96.67,
+      97.43,
+      90.97,
+      76.69
+    ],
+    "Supermemory": [
+      98.57,
+      98.21,
+      70.0,
+      89.74,
+      81.95,
+      76.69
+    ],
+    "Zep": [
+      92.9,
+      80.4,
+      56.7,
+      83.3,
+      62.4,
+      57.9
+    ],
+    "Full-Context (GPT-4o)": [
+      81.4,
+      94.6,
+      20.0,
+      78.2,
+      45.1,
+      44.3
+    ],
+    "Mem0-OSS": [
+      38.71,
+      8.93,
+      40.0,
+      52.56,
+      25.56,
+      20.3
+    ]
+  },
+  "overall": {
+    "HydraDB": 90.79,
+    "Supermemory": 85.2,
+    "Zep": 71.2,
+    "Full-Context (GPT-4o)": 60.2,
+    "Mem0-OSS": 29.07
+  },
+  "cross_model": {
+    "Gemini 3.0 Pro": 90.79,
+    "GPT-5 Mini": 85.8,
+    "GPT-5.2": 84.73
+  },
+  "test_cases": [
+    {
+      "category": "Information Extraction",
+      "name": "Extract buried fact",
+      "question": "How many pods is the auth service deployed on and in which region?",
+      "expected": "3 pods in us-east-1",
+      "why_hard": "The fact is buried among many other details. Plain RAG might retrieve the wrong chunk or miss the pod count."
+    },
+    {
+      "category": "Information Extraction",
+      "name": "Extract preference from noise",
+      "question": "What type of database does the user prefer for relational data?",
+      "expected": "Graph databases, specifically Neo4j",
+      "why_hard": "The preference is expressed implicitly across multiple statements. Plain RAG might surface the DynamoDB mention instead."
+    },
+    {
+      "category": "Multi-Session Reasoning",
+      "name": "Connect facts across sessions",
+      "question": "What is the user's role, how big is their team, and what funding has the company raised?",
+      "expected": "Backend team lead at NeuralPath, team of 5 engineers, raised $40M Series B from a16z",
+      "why_hard": "Each fact is in a different session. Plain RAG treats sessions independently \u2014 it can't synthesize across them. HydraDB's graph links User \u2192 NeuralPath \u2192 Series B \u2192 a16z."
+    },
+    {
+      "category": "Multi-Session Reasoning",
+      "name": "Infer unstated conclusion",
+      "question": "Why is the user moving to Austin?",
+      "expected": "For a new job as VP of Engineering at an autonomous vehicle company",
+      "why_hard": "The reason for moving is never explicitly stated. It requires connecting: move to Austin + company in Austin + new role. HydraDB's graph traversal connects these causally."
+    },
+    {
+      "category": "Knowledge Updates",
+      "name": "Handle contradictory updates",
+      "question": "Where does the user live and what is their current role?",
+      "expected": "London, Head of Quant Research at Goldman Sachs",
+      "why_hard": "Plain RAG may retrieve the NYC fact (higher similarity to 'where do you live'). It can't distinguish current from outdated. HydraDB's temporal graph tracks state transitions."
+    },
+    {
+      "category": "Knowledge Updates",
+      "name": "Diet change with reason",
+      "question": "What is the user's current diet and why did they change?",
+      "expected": "Vegetarian, changed due to high cholesterol per doctor's advice",
+      "why_hard": "Plain RAG might surface 'steak lover' (strong embedding match for 'diet'). HydraDB preserves the temporal chain: steak_lover(t1) \u2192 vegetarian(t2) with reason=cholesterol."
+    },
+    {
+      "category": "Temporal Reasoning",
+      "name": "Timeline reconstruction",
+      "question": "What did the user do between 2021 and 2023?",
+      "expected": "Co-founded DataFlow (2021), which was acquired by Snowflake (2023)",
+      "why_hard": "Requires filtering by time range across multiple chunks. Plain RAG has no temporal index \u2014 it retrieves by similarity, not by time. HydraDB's versioned graph has explicit temporal edges."
+    },
+    {
+      "category": "Temporal Reasoning",
+      "name": "Recency disambiguation",
+      "question": "What code editor does the user currently use?",
+      "expected": "Cursor",
+      "why_hard": "'VS Code' has a stronger embedding match for 'code editor' than 'Cursor' does. Plain RAG has no concept of 'current' vs 'past'. HydraDB's temporal graph surfaces the latest state."
+    },
+    {
+      "category": "Abstention",
+      "name": "Refuse when no evidence",
+      "question": "What cloud provider does the user use for hosting?",
+      "expected": "I don't have enough information. Firebase is mentioned for auth, but hosting provider is not specified.",
+      "why_hard": "Plain RAG might retrieve the Firebase chunk and hallucinate 'Google Cloud' (since Firebase is a Google product). HydraDB's structured graph knows 'hosting provider' was never stated."
+    }
+  ]
+}
