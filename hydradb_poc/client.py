@@ -181,10 +181,9 @@ class HydraDBClient:
 
     # ── Delete ───────────────────────────────────────────────
 
-    def delete_memory(self, source_id: str) -> dict:
+    def delete_memory(self, memory_id: str) -> dict:
         resp = self._session.delete(
-            self._url("/memories/delete_memory"),
-            json={"tenant_id": self.tenant_id, "source_id": source_id},
+            self._url(f"/memories/delete_memory?tenant_id={self.tenant_id}&memory_id={memory_id}"),
         )
         resp.raise_for_status()
         return resp.json()

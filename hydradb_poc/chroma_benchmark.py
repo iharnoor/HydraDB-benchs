@@ -1,9 +1,9 @@
 """
 ╔══════════════════════════════════════════════════════════════════╗
-║  BENCHMARK: HydraDB vs ChromaDB (Pure Vector DB)                 ║
+║  BENCHMARK: HydraDB vs Traditional Vector DB                      ║
 ║                                                                  ║
 ║  Same data. Same questions. Real API calls vs local vectors.     ║
-║  ChromaDB = pure cosine similarity. No graph, no BM25, no hybrid.║
+║  Vector DB = pure cosine similarity. No graph, no BM25, no hybrid.║
 ║                                                                  ║
 ║  Run: python3 -m hydradb_poc.chroma_benchmark                    ║
 ╚══════════════════════════════════════════════════════════════════╝
@@ -33,6 +33,16 @@ class TestCase:
     question: str
     expected: str
     why_matters: str
+    # gold_keywords: a chunk is a "hit" if ALL keywords in at least one
+    # gold group appear in it.  Groups are OR'd, keywords within a group
+    # are AND'd.  e.g. [["Princeton", "New Jersey"], ["Taj Mahal"]]
+    # means a chunk is relevant if it mentions (Princeton AND New Jersey)
+    # OR (Taj Mahal).
+    gold_keywords: list[list[str]] = None  # set via field default_factory below
+
+    def __post_init__(self):
+        if self.gold_keywords is None:
+            self.gold_keywords = []
 
 
 TEST_CASES = [
@@ -43,6 +53,7 @@ TEST_CASES = [
         question="When did Harnoor and Katie meet for the second time?",
         expected="October 18, 2020",
         why_matters="Exact date retrieval from a specific memory",
+        gold_keywords=[["October 18, 2020", "second time"]],
     ),
     TestCase(
         category="Information Extraction",
@@ -50,6 +61,7 @@ TEST_CASES = [
         question="What car did Harnoor and Katie buy together?",
         expected="White Tesla Model 3",
         why_matters="Specific fact (car model + color) buried in descriptive paragraph",
+        gold_keywords=[["Tesla Model 3"]],
     ),
     TestCase(
         category="Information Extraction",
@@ -57,6 +69,7 @@ TEST_CASES = [
         question="What did Katie wear for Navratri?",
         expected="Red and green lehenga with traditional jewelry",
         why_matters="Specific clothing detail from a cultural event description",
+        gold_keywords=[["lehenga", "Navratri"]],
     ),
 
     # ── Multi-Session Reasoning ───────────────────────────
@@ -66,6 +79,8 @@ TEST_CASES = [
         question="How did Harnoor and Katie's relationship progress from casual dating to major commitments?",
         expected="First car date Nov 2020 → first formal dinner Valentine's 2021 → bought a Tesla together May 2022",
         why_matters="Requires combining 3+ memories to show relationship arc",
+        # Need at least 2 of these 3 chunks in top-5
+        gold_keywords=[["first car date"], ["Valentine"], ["Tesla"]],
     ),
     TestCase(
         category="Multi-Session Reasoning",
@@ -73,6 +88,7 @@ TEST_CASES = [
         question="How did Harnoor and Katie embrace each other's cultures?",
         expected="Katie: Navratri/lehenga/Garba, wore Indian clothing at Taj Mahal. Harnoor: Thanksgiving with Katie's family, Christmas together.",
         why_matters="Must combine cultural exchange moments across multiple memories",
+        gold_keywords=[["Navratri", "lehenga"], ["Thanksgiving", "Katie's family"], ["Taj Mahal"]],
     ),
 
     # ── Temporal Reasoning ────────────────────────────────
@@ -82,6 +98,8 @@ TEST_CASES = [
         question="How many times did Harnoor and Katie go to Miami for New Year's?",
         expected="Twice — January 2021 and January 2022",
         why_matters="Must identify a repeated event across two different years",
+        # Both Miami NYE chunks must appear
+        gold_keywords=[["January 1, 2021", "Miami"], ["January 1, 2022", "Miami"]],
     ),
     TestCase(
         category="Temporal Reasoning",
@@ -89,6 +107,7 @@ TEST_CASES = [
         question="When was Harnoor and Katie's first trip outside of Florida?",
         expected="July 3, 2021 — Princeton University visit in New Jersey",
         why_matters="Must distinguish Florida trips from out-of-state trips",
+        gold_keywords=[["Princeton", "New Jersey"]],
     ),
 
     # ── Semantic Understanding ────────────────────────────
@@ -98,6 +117,7 @@ TEST_CASES = [
         question="What was the significance of Harnoor and Katie attending a wedding together?",
         expected="It signaled deeper commitment — being invited to important life events as a unit",
         why_matters="Must infer emotional/relational meaning, not just recall facts",
+        gold_keywords=[["wedding", "commitment"]],
     ),
     TestCase(
         category="Semantic Understanding",
@@ -105,6 +125,7 @@ TEST_CASES = [
         question="Why was the Fourth of July celebration special for Harnoor?",
         expected="As an international student from India, experiencing this American tradition with Katie was culturally meaningful",
         why_matters="Must extract the cultural significance, not just 'they watched fireworks'",
+        gold_keywords=[["Fourth of July", "international student"]],
     ),
 
     # ── Abstention / Precision ────────────────────────────
@@ -114,6 +135,7 @@ TEST_CASES = [
         question="When is Harnoor's birthday and how was it celebrated?",
         expected="December 23 — Katie surprised him with a blue gift bag at his apartment",
         why_matters="Must NOT confuse Harnoor's birthday with Katie's birthday",
+        gold_keywords=[["December 23", "Harnoor's Birthday"]],
     ),
     TestCase(
         category="Abstention",
@@ -121,6 +143,8 @@ TEST_CASES = [
         question="Are Harnoor and Katie engaged or married?",
         expected="Unknown / not mentioned — buying a car is the biggest commitment mentioned",
         why_matters="Should NOT infer engagement/marriage from buying a car together",
+        # The overview doc is the safest retrieval — no wedding/engagement signal
+        gold_keywords=[["chronicles the relationship journey"]],
     ),
 
     # ── Negation (Vector DBs Can't "NOT") ─────────────────
@@ -130,6 +154,8 @@ TEST_CASES = [
         question="What did Harnoor and Katie celebrate together that was NOT a birthday?",
         expected="Navratri, July 4th, Valentine's Day, Thanksgiving, Christmas, New Year's, wedding",
         why_matters="Vector search returns birthday chunks FIRST because 'birthday' is in the query — cosine similarity can't negate",
+        # Any non-birthday celebration chunk counts as a hit
+        gold_keywords=[["Navratri"], ["Fourth of July"], ["Valentine"], ["Thanksgiving"], ["Christmas Together"], ["wedding"]],
     ),
     TestCase(
         category="Negation",
@@ -137,6 +163,7 @@ TEST_CASES = [
         question="What trips did Harnoor and Katie take that were NOT in Florida?",
         expected="Princeton/NJ (July 2021), India (March 2022)",
         why_matters="Vector returns Miami and FSU trips (highest similarity to 'trip') even though they're IN Florida",
+        gold_keywords=[["Princeton", "New Jersey"], ["Taj Mahal", "India"]],
     ),
 
     # ── Temporal Adjacency ────────────────────────────────
@@ -146,6 +173,7 @@ TEST_CASES = [
         question="What did Harnoor and Katie do the day after visiting Princeton?",
         expected="July 4th fireworks celebration — they watched fireworks in a large crowd",
         why_matters="Vector search has no concept of 'the day after' — returns Princeton chunk or random travel chunks",
+        gold_keywords=[["Fourth of July", "fireworks"]],
     ),
     TestCase(
         category="Temporal Adjacency",
@@ -153,6 +181,8 @@ TEST_CASES = [
         question="Put these events in chronological order: buying a car, visiting India, attending a wedding",
         expected="Wedding (Aug 2021) → India (March 2022) → Tesla (May 2022)",
         why_matters="Vector returns chunks in SIMILARITY order, not chronological — embeddings have no clock",
+        # All 3 event chunks must be in top 5
+        gold_keywords=[["wedding"], ["Taj Mahal"], ["Tesla"]],
     ),
 
     # ── Entity Direction (WHO did WHAT to WHOM) ───────────
@@ -162,6 +192,7 @@ TEST_CASES = [
         question="What did Katie specifically do for Harnoor's birthday?",
         expected="Surprised him with a large blue 'Happy Birthday' gift bag at his apartment on December 23, 2020",
         why_matters="Vector returns both birthday chunks equally — can't distinguish Katie→Harnoor from Harnoor→Katie direction",
+        gold_keywords=[["December 23", "Katie surprised"]],
     ),
     TestCase(
         category="Entity Direction",
@@ -169,6 +200,7 @@ TEST_CASES = [
         question="Which of Harnoor's Indian traditions did Katie participate in?",
         expected="Navratri (wore lehenga, danced Garba), wore Indian clothing at Taj Mahal",
         why_matters="Vector also returns Thanksgiving/Christmas (Harnoor adopting Katie's traditions) — can't filter by direction",
+        gold_keywords=[["Navratri", "lehenga"], ["Taj Mahal", "Indian"]],
     ),
 
     # ── Geographic Entity Filtering ───────────────────────
@@ -178,6 +210,7 @@ TEST_CASES = [
         question="Which events happened outside of the United States?",
         expected="Only the India trip — visiting the Taj Mahal in March 2022",
         why_matters="Vector returns any travel chunk (Miami, Princeton, India all score similarly on 'events outside') — no geographic entity awareness",
+        gold_keywords=[["Taj Mahal", "India"]],
     ),
 
     # ── Aggregation Across All Chunks ─────────────────────
@@ -187,6 +220,12 @@ TEST_CASES = [
         question="List every holiday or celebration Harnoor and Katie shared together",
         expected="Harnoor's birthday, Katie's birthday, NYE 2021, NYE 2022, Valentine's Day, Navratri, July 4th, Thanksgiving, Christmas, wedding attendance",
         why_matters="Vector top-5 retrieval returns ~5 most 'celebration-like' chunks and misses the rest — can't aggregate across all 19 memories",
+        # Each distinct celebration chunk is a gold group
+        gold_keywords=[
+            ["Harnoor's Birthday"], ["Katie's Birthday"], ["Miami", "2021"],
+            ["Miami", "2022"], ["Valentine"], ["Navratri"],
+            ["Fourth of July"], ["Thanksgiving"], ["Christmas Together"], ["wedding"],
+        ],
     ),
 ]
 
@@ -204,6 +243,50 @@ class Result:
     latency_ms: float
     chunks_returned: int = 0
     error: str = ""
+    raw_chunks: list[str] = None  # full text of each retrieved chunk
+
+    def __post_init__(self):
+        if self.raw_chunks is None:
+            self.raw_chunks = []
+
+
+# ═══════════════════════════════════════════════════════════════
+#  EVAL METRICS — recall@5 and MRR
+# ═══════════════════════════════════════════════════════════════
+
+def _chunk_matches_group(chunk_text: str, keyword_group: list[str]) -> bool:
+    """True if ALL keywords in the group appear in chunk_text (case-insensitive)."""
+    text_lower = chunk_text.lower()
+    return all(kw.lower() in text_lower for kw in keyword_group)
+
+
+def compute_recall_at_k(chunks: list[str], gold_groups: list[list[str]], k: int = 5) -> float:
+    """
+    Recall@K: fraction of gold keyword groups matched by at least one chunk in top-K.
+    Each gold group represents one piece of required information.
+    A group is "recalled" if any chunk in the top-K contains ALL its keywords.
+    """
+    if not gold_groups:
+        return 0.0
+    top_k = chunks[:k]
+    recalled = 0
+    for group in gold_groups:
+        if any(_chunk_matches_group(c, group) for c in top_k):
+            recalled += 1
+    return recalled / len(gold_groups)
+
+
+def compute_mrr(chunks: list[str], gold_groups: list[list[str]]) -> float:
+    """
+    MRR (Mean Reciprocal Rank): 1/rank of the FIRST chunk that matches ANY gold group.
+    If no chunk matches, MRR = 0.
+    """
+    if not gold_groups:
+        return 0.0
+    for rank, chunk in enumerate(chunks, 1):
+        if any(_chunk_matches_group(chunk, group) for group in gold_groups):
+            return 1.0 / rank
+    return 0.0
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -212,13 +295,13 @@ class Result:
 
 def run_chroma() -> tuple[list[Result], ChromaClient]:
     """Ingest all timeline chunks into ChromaDB, then run queries."""
-    print("\n  [ChromaDB] Initializing local vector database...")
+    print("\n  [Vector DB] Initializing local vector database...")
     client = ChromaClient(collection_name="relationship_timeline")
 
     # Ingest all timeline chunks
-    print(f"  [ChromaDB] Ingesting {len(TIMELINE_CHUNKS)} memory chunks...")
+    print(f"  [Vector DB] Ingesting {len(TIMELINE_CHUNKS)} memory chunks...")
     client.add_memories(TIMELINE_CHUNKS)
-    print(f"  [ChromaDB] {client.count()} chunks indexed (instant — local embeddings)")
+    print(f"  [Vector DB] {client.count()} chunks indexed (instant — local embeddings)")
 
     results = []
     for i, case in enumerate(TEST_CASES):
@@ -229,6 +312,7 @@ def run_chroma() -> tuple[list[Result], ChromaClient]:
             hits = client.search(case.question, top_k=5)
             latency = (time.time() - start) * 1000
 
+            raw_chunks = [h["text"] for h in hits] if hits else []
             if hits:
                 answer = " | ".join(h["text"][:150] for h in hits[:3])
             else:
@@ -236,15 +320,15 @@ def run_chroma() -> tuple[list[Result], ChromaClient]:
 
             print(f"{latency:.1f}ms ({len(hits)} chunks)")
             results.append(Result(
-                "ChromaDB", case.name, case.category,
-                answer[:500], latency, len(hits),
+                "Traditional Vector DB", case.name, case.category,
+                answer[:500], latency, len(hits), "", raw_chunks,
             ))
         except Exception as e:
             latency = (time.time() - start) * 1000
             print(f"ERR: {e}")
             results.append(Result(
-                "ChromaDB", case.name, case.category,
-                "", latency, 0, str(e),
+                "Traditional Vector DB", case.name, case.category,
+                "", latency, 0, str(e), [],
             ))
 
     return results, client
@@ -270,6 +354,7 @@ def run_hydradb(api_key: str) -> list[Result]:
             latency = (time.time() - start) * 1000
 
             chunks = resp.get("chunks", [])
+            raw_chunks = [c.get("chunk_content", "") for c in chunks]
             if chunks:
                 answer = " | ".join(
                     c.get("chunk_content", "")[:150] for c in chunks[:3]
@@ -280,14 +365,14 @@ def run_hydradb(api_key: str) -> list[Result]:
             print(f"{latency:.0f}ms ({len(chunks)} chunks)")
             results.append(Result(
                 "HydraDB", case.name, case.category,
-                answer[:500], latency, len(chunks),
+                answer[:500], latency, len(chunks), "", raw_chunks,
             ))
         except Exception as e:
             latency = (time.time() - start) * 1000
             print(f"ERR: {e}")
             results.append(Result(
                 "HydraDB", case.name, case.category,
-                "", latency, 0, str(e),
+                "", latency, 0, str(e), [],
             ))
 
     return results
@@ -305,15 +390,15 @@ def main():
         return
 
     print("=" * 70)
-    print("  BENCHMARK: HydraDB vs ChromaDB (Pure Vector DB)")
+    print("  BENCHMARK: HydraDB vs Traditional Vector DB")
     print(f"  {len(TEST_CASES)} test cases | 5 categories")
-    print(f"  ChromaDB: local, pure cosine similarity, default embeddings")
+    print(f"  Vector DB: local, pure cosine similarity, standard embeddings")
     print(f"  HydraDB:  cloud, hybrid vector+graph+BM25")
     print("=" * 70)
 
     # ── Run ChromaDB ──────────────────────────────────────
     print(f"\n{'─'*70}")
-    print("  RUNNING CHROMADB (Pure Vector)")
+    print("  RUNNING TRADITIONAL VECTOR DB (Pure Vector)")
     print(f"{'─'*70}")
     chroma_results, chroma_client = run_chroma()
 
@@ -328,14 +413,40 @@ def main():
     print("  RESULTS: SIDE-BY-SIDE COMPARISON")
     print(f"{'='*70}")
 
+    # ── Compute recall@5 and MRR per test case ────────────
     comparison = []
+    h_recalls, c_recalls = [], []
+    h_mrrs, c_mrrs = [], []
+
     for case, chroma, hydra in zip(TEST_CASES, chroma_results, hydra_results):
+        h_recall = compute_recall_at_k(hydra.raw_chunks, case.gold_keywords, k=5)
+        c_recall = compute_recall_at_k(chroma.raw_chunks, case.gold_keywords, k=5)
+        h_mrr = compute_mrr(hydra.raw_chunks, case.gold_keywords)
+        c_mrr = compute_mrr(chroma.raw_chunks, case.gold_keywords)
+
+        h_recalls.append(h_recall)
+        c_recalls.append(c_recall)
+        h_mrrs.append(h_mrr)
+        c_mrrs.append(c_mrr)
+
+        # Determine winner from recall@5, break ties with MRR
+        if h_recall > c_recall:
+            winner = "hydra"
+        elif c_recall > h_recall:
+            winner = "chroma"
+        elif h_mrr > c_mrr:
+            winner = "hydra"
+        elif c_mrr > h_mrr:
+            winner = "chroma"
+        else:
+            winner = "tie"
+
         print(f"\n  ┌─ [{case.category}] {case.name}")
         print(f"  │  Q: {case.question}")
         print(f"  │  Expected: {case.expected}")
-        print(f"  ├─ ChromaDB ({chroma.latency_ms:.1f}ms, {chroma.chunks_returned} chunks): {chroma.answer[:100]}")
-        print(f"  ├─ HydraDB  ({hydra.latency_ms:.0f}ms, {hydra.chunks_returned} chunks): {hydra.answer[:100]}")
-        print(f"  └─ Why it matters: {case.why_matters}")
+        print(f"  ├─ VectorDB  recall@5={c_recall:.2f}  MRR={c_mrr:.3f}  ({chroma.latency_ms:.1f}ms)")
+        print(f"  ├─ HydraDB   recall@5={h_recall:.2f}  MRR={h_mrr:.3f}  ({hydra.latency_ms:.0f}ms)")
+        print(f"  └─ Winner: {winner.upper()}")
 
         comparison.append({
             "category": case.category,
@@ -346,14 +457,29 @@ def main():
             "chroma_latency_ms": round(chroma.latency_ms, 1),
             "chroma_chunks": chroma.chunks_returned,
             "chroma_error": chroma.error,
+            "chroma_recall_at_5": round(c_recall, 4),
+            "chroma_mrr": round(c_mrr, 4),
             "hydra_answer": hydra.answer,
             "hydra_latency_ms": round(hydra.latency_ms),
             "hydra_chunks": hydra.chunks_returned,
             "hydra_error": hydra.error,
+            "hydra_recall_at_5": round(h_recall, 4),
+            "hydra_mrr": round(h_mrr, 4),
+            "winner": winner,
             "why_matters": case.why_matters,
+            "gold_keywords": case.gold_keywords,
         })
 
-    # ── Summary ───────────────────────────────────────────
+    # ── Aggregate metrics ─────────────────────────────────
+    avg_h_recall = sum(h_recalls) / len(h_recalls)
+    avg_c_recall = sum(c_recalls) / len(c_recalls)
+    avg_h_mrr = sum(h_mrrs) / len(h_mrrs)
+    avg_c_mrr = sum(c_mrrs) / len(c_mrrs)
+
+    wins_h = sum(1 for c in comparison if c["winner"] == "hydra")
+    wins_c = sum(1 for c in comparison if c["winner"] == "chroma")
+    ties = sum(1 for c in comparison if c["winner"] == "tie")
+
     c_lats = [r.latency_ms for r in chroma_results]
     h_lats = [r.latency_ms for r in hydra_results]
     c_errs = sum(1 for r in chroma_results if r.error)
@@ -368,8 +494,11 @@ def main():
             "errors": c_errs,
             "total": len(chroma_results),
             "type": "Pure vector (cosine similarity)",
-            "embedding_model": "all-MiniLM-L6-v2 (Chroma default)",
+            "embedding_model": "Standard embeddings",
             "location": "Local (in-memory)",
+            "avg_recall_at_5": round(avg_c_recall, 4),
+            "avg_mrr": round(avg_c_mrr, 4),
+            "wins": wins_c,
         },
         "hydradb": {
             "avg_latency_ms": round(sum(h_lats) / len(h_lats)),
@@ -380,18 +509,31 @@ def main():
             "total": len(hydra_results),
             "type": "Hybrid (vector + graph + BM25)",
             "location": "Cloud API",
+            "avg_recall_at_5": round(avg_h_recall, 4),
+            "avg_mrr": round(avg_h_mrr, 4),
+            "wins": wins_h,
         },
+        "ties": ties,
     }
 
     print(f"\n{'='*70}")
-    print("  SUMMARY")
+    print("  RETRIEVAL QUALITY METRICS")
     print(f"{'='*70}")
-    print(f"  {'':25s} {'Avg':>10s} {'P50':>10s} {'Min':>10s} {'Max':>10s} {'Errors':>8s}")
-    print(f"  {'ChromaDB (pure vector)':25s} {summary['chromadb']['avg_latency_ms']:>8.1f}ms {summary['chromadb']['p50_latency_ms']:>8.1f}ms {summary['chromadb']['min_latency_ms']:>8.1f}ms {summary['chromadb']['max_latency_ms']:>8.1f}ms {c_errs:>6d}/{len(chroma_results)}")
-    print(f"  {'HydraDB (hybrid)':25s} {summary['hydradb']['avg_latency_ms']:>8d}ms {summary['hydradb']['p50_latency_ms']:>8d}ms {summary['hydradb']['min_latency_ms']:>8d}ms {summary['hydradb']['max_latency_ms']:>8d}ms {h_errs:>6d}/{len(hydra_results)}")
+    print(f"  {'':25s} {'Recall@5':>10s} {'MRR':>10s} {'Wins':>8s}")
+    print(f"  {'HydraDB (hybrid)':25s} {avg_h_recall:>9.1%} {avg_h_mrr:>9.3f} {wins_h:>6d}/{len(comparison)}")
+    print(f"  {'Vector DB (pure vector)':25s} {avg_c_recall:>9.1%} {avg_c_mrr:>9.3f} {wins_c:>6d}/{len(comparison)}")
+    print(f"  {'Ties':25s} {'':>10s} {'':>10s} {ties:>6d}/{len(comparison)}")
 
-    print(f"\n  Note: ChromaDB runs locally (no network latency).")
-    print(f"  The comparison focuses on RETRIEVAL QUALITY, not speed.")
+    print(f"\n{'='*70}")
+    print("  LATENCY")
+    print(f"{'='*70}")
+    print(f"  {'':25s} {'Avg':>10s} {'P50':>10s} {'Min':>10s} {'Max':>10s}")
+    print(f"  {'Vector DB (pure vector)':25s} {summary['chromadb']['avg_latency_ms']:>8.1f}ms {summary['chromadb']['p50_latency_ms']:>8.1f}ms {summary['chromadb']['min_latency_ms']:>8.1f}ms {summary['chromadb']['max_latency_ms']:>8.1f}ms")
+    print(f"  {'HydraDB (hybrid)':25s} {summary['hydradb']['avg_latency_ms']:>8d}ms {summary['hydradb']['p50_latency_ms']:>8d}ms {summary['hydradb']['min_latency_ms']:>8d}ms {summary['hydradb']['max_latency_ms']:>8d}ms")
+
+    print(f"\n  Note: Vector DB runs locally (no network latency).")
+    print(f"  Recall@5 = fraction of required info found in top 5 chunks.")
+    print(f"  MRR = 1/rank of first relevant chunk (higher = better ranking).")
     print(f"  Both systems got the same {len(TIMELINE_CHUNKS)} memory chunks.")
 
     # ── Save ──────────────────────────────────────────────

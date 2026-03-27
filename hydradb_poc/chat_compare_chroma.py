@@ -1,5 +1,5 @@
 """
-Side-by-side chat comparison: HydraDB vs ChromaDB (Pure Vector DB).
+Side-by-side chat comparison: HydraDB vs Traditional Vector DB.
 
 Both systems recall memories from the same dataset (Harnoor & Katie timeline).
 Type a question and see how each system responds in real time.
@@ -83,8 +83,27 @@ def query_hydradb(question: str) -> tuple[str, str, float, list[dict]]:
             raw_context = "\n".join(
                 c.get("chunk_content", "") for c in chunks
             )
-            # answer = summarize_with_gemini(question, raw_context)
-            answer = raw_context  # Raw chunks — no LLM summarization
+            # AI-generated answer on top
+            ai_answer = summarize_with_gemini(question, raw_context)
+            ai_html = (
+                f'<div style="margin-bottom:16px;padding:14px;background:rgba(129,140,248,0.1);border-radius:10px;border:1px solid rgba(129,140,248,0.25);">'
+                f'<div style="font-size:0.7rem;font-weight:700;color:#818cf8;margin-bottom:6px;letter-spacing:0.05em;">AI ANSWER</div>'
+                f'<div style="font-size:0.92rem;color:#e4e4ed;line-height:1.6;">{ai_answer}</div>'
+                f'</div>'
+            )
+            # Format each chunk separately with score
+            parts = [ai_html]
+            parts.append('<div style="font-size:0.7rem;font-weight:600;color:#8888a0;margin-bottom:8px;letter-spacing:0.05em;">RETRIEVED CHUNKS</div>')
+            for i, c in enumerate(chunks, 1):
+                score = c.get("relevancy_score", 0)
+                content = c.get("chunk_content", "")[:300]
+                parts.append(
+                    f'<div style="margin-bottom:12px;padding:10px;background:rgba(129,140,248,0.06);border-radius:8px;border-left:3px solid #818cf8;">'
+                    f'<div style="font-size:0.72rem;font-weight:700;color:#818cf8;margin-bottom:4px;">Chunk {i} &middot; score: {score:.3f}</div>'
+                    f'<div style="font-size:0.82rem;color:#e4e4ed;line-height:1.5;">{content}</div>'
+                    f'</div>'
+                )
+            answer = "".join(parts)
         else:
             raw_context = ""
             answer = "*No memories found.*"
@@ -97,7 +116,7 @@ def query_chroma(question: str) -> tuple[str, str, float, list[dict]]:
     """Query ChromaDB. Returns (answer, raw_context, latency_ms, results)."""
     client = st.session_state.chroma
     if not client:
-        return "ChromaDB not initialized", "", 0, []
+        return "Vector DB not initialized", "", 0, []
     start = time.time()
     try:
         hits = client.search(question, top_k=5)
@@ -105,8 +124,27 @@ def query_chroma(question: str) -> tuple[str, str, float, list[dict]]:
 
         if hits:
             raw_context = "\n".join(h["text"] for h in hits)
-            # answer = summarize_with_gemini(question, raw_context)
-            answer = raw_context  # Raw chunks — no LLM summarization
+            # AI-generated answer on top
+            ai_answer = summarize_with_gemini(question, raw_context)
+            ai_html = (
+                f'<div style="margin-bottom:16px;padding:14px;background:rgba(249,115,22,0.1);border-radius:10px;border:1px solid rgba(249,115,22,0.25);">'
+                f'<div style="font-size:0.7rem;font-weight:700;color:#f97316;margin-bottom:6px;letter-spacing:0.05em;">AI ANSWER</div>'
+                f'<div style="font-size:0.92rem;color:#e4e4ed;line-height:1.6;">{ai_answer}</div>'
+                f'</div>'
+            )
+            # Format each chunk separately with score
+            parts = [ai_html]
+            parts.append('<div style="font-size:0.7rem;font-weight:600;color:#8888a0;margin-bottom:8px;letter-spacing:0.05em;">RETRIEVED CHUNKS</div>')
+            for i, h in enumerate(hits, 1):
+                score = h.get("score", 0)
+                content = h["text"][:300]
+                parts.append(
+                    f'<div style="margin-bottom:12px;padding:10px;background:rgba(249,115,22,0.06);border-radius:8px;border-left:3px solid #f97316;">'
+                    f'<div style="font-size:0.72rem;font-weight:700;color:#f97316;margin-bottom:4px;">Chunk {i} &middot; score: {score:.3f}</div>'
+                    f'<div style="font-size:0.82rem;color:#e4e4ed;line-height:1.5;">{content}</div>'
+                    f'</div>'
+                )
+            answer = "".join(parts)
         else:
             raw_context = ""
             answer = "*No memories found.*"
@@ -117,7 +155,7 @@ def query_chroma(question: str) -> tuple[str, str, float, list[dict]]:
 
 # ── Page Config ──────────────────────────────────────────────
 st.set_page_config(
-    page_title="HydraDB vs ChromaDB — Chat Compare",
+    page_title="HydraDB vs Traditional Vector DB — Chat Compare",
     page_icon="\u2705",
     layout="wide",
 )
@@ -141,7 +179,7 @@ st.markdown("""
         letter-spacing: -0.02em;
     }
     .main-header h1 .hydra { color: #818cf8; }
-    .main-header h1 .chroma { color: #f97316; }
+    .main-header h1 .vectordb { color: #f97316; }
     .main-header h1 .vs { color: #8888a0; font-weight: 400; }
     .main-header p { color: #8888a0; font-size: 0.9rem; margin-top: 4px; }
 
@@ -160,7 +198,7 @@ st.markdown("""
         background: rgba(99,102,241,0.12);
         border: 1px solid rgba(99,102,241,0.25);
     }
-    .system-label.chroma {
+    .system-label.vectordb {
         color: #f97316;
         background: rgba(249,115,22,0.12);
         border: 1px solid rgba(249,115,22,0.25);
@@ -234,8 +272,8 @@ init_clients()
 # ── Header ───────────────────────────────────────────────────
 st.markdown("""
 <div class="main-header">
-    <h1><span class="hydra">HydraDB</span> <span class="vs">vs</span> <span class="chroma">ChromaDB</span></h1>
-    <p>Hybrid memory (vector + graph + BM25) vs pure vector DB &mdash; Harnoor &amp; Katie's relationship timeline</p>
+    <h1><span class="hydra">HydraDB</span> <span class="vs">vs</span> <span class="vectordb">Traditional Vector DB</span></h1>
+    <p>Hybrid memory (vector + graph + BM25) vs traditional vector DB &mdash; Harnoor &amp; Katie's relationship timeline</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -305,7 +343,7 @@ for entry in reversed(st.session_state.history):
     with col2:
         st.markdown(f"""
         <div>
-            <span class="system-label chroma">ChromaDB</span>
+            <span class="system-label vectordb">Traditional Vector DB</span>
             <span class="latency-tag">{entry['chroma']['latency']:.0f}ms</span>
         </div>
         """, unsafe_allow_html=True)
@@ -327,10 +365,10 @@ with st.sidebar:
         st.error("HydraDB: No API key")
 
     if st.session_state.chroma:
-        st.success("ChromaDB loaded")
+        st.success("Vector DB loaded")
         st.caption(f"{st.session_state.chroma.count()} chunks indexed (local)")
     else:
-        st.error("ChromaDB: Not initialized")
+        st.error("Vector DB: Not initialized")
 
     if st.session_state.gemini:
         st.success("Gemini connected")
@@ -342,9 +380,9 @@ with st.sidebar:
 
     st.markdown("### How it works")
     st.caption(
-        "1. Your question is sent to both HydraDB and ChromaDB\n"
+        "1. Your question is sent to both HydraDB and a Traditional Vector DB\n"
         "2. HydraDB: hybrid vector + graph + BM25 (cloud API)\n"
-        "3. ChromaDB: pure cosine similarity (local, all-MiniLM-L6-v2)\n"
+        "3. Vector DB: pure cosine similarity (local embeddings)\n"
         "4. Gemini summarizes each into a one-line answer\n"
         "5. Raw retrieved chunks available in expandable section"
     )
@@ -353,12 +391,12 @@ with st.sidebar:
 
     st.markdown("### System Comparison")
     st.markdown("""
-    | | **HydraDB** | **ChromaDB** |
+    | | **HydraDB** | **Traditional Vector DB** |
     |---|---|---|
     | **Type** | Hybrid | Pure vector |
     | **Search** | Vector+Graph+BM25 | Cosine similarity |
     | **Location** | Cloud API | Local (in-memory) |
-    | **Embeddings** | Proprietary | all-MiniLM-L6-v2 |
+    | **Embeddings** | Proprietary | Standard embeddings |
     """)
 
     if st.session_state.history:
@@ -369,7 +407,7 @@ with st.sidebar:
         st.metric("Queries", len(st.session_state.history))
         c1, c2 = st.columns(2)
         c1.metric("HydraDB avg", f"{sum(h_lats)/len(h_lats):.0f}ms")
-        c2.metric("ChromaDB avg", f"{sum(c_lats)/len(c_lats):.0f}ms")
+        c2.metric("Vector DB avg", f"{sum(c_lats)/len(c_lats):.0f}ms")
 
         if st.button("Clear history"):
             st.session_state.history = []

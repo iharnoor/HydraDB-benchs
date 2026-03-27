@@ -1,10 +1,10 @@
 """
-ChromaDB Client — Pure vector database baseline.
+Traditional Vector DB Client — Pure vector database baseline.
 
-ChromaDB is an open-source embedding database that uses cosine similarity
+Uses an open-source embedding database with cosine similarity
 for search. No graph, no BM25, no hybrid — just vectors.
 
-This makes it the perfect "traditional vector DB" baseline for benchmarks.
+This is the "traditional vector DB" baseline for benchmarks.
 """
 
 import chromadb

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Why Coding Agent Couldn't Figure Out HydraDB</title></head>
+<body style="font-family: Arial, sans-serif; max-width: 780px; margin: 40px auto; padding: 20px; color: #1a1a2e; line-height: 1.7; background: #fff;">
+
+<h1 style="font-size: 26px; color: #1a73e8; border-bottom: 3px solid #1a73e8; padding-bottom: 10px;">Why Coding Agent Couldn't Figure Out HydraDB</h1>
+
+<p style="font-size: 14px; color: #5f6368; font-style: italic; margin-bottom: 4px;">A root cause analysis of API documentation mismatches that caused Claude Code to misconfigure HydraDB endpoints, leading to failed ingestion and suboptimal retrieval.</p>
+<p style="font-size: 13px; color: #9aa0a6;">March 26, 2026 &mdash; HydraDB POC Benchmark Project</p>
+
+<br>
+
+<!-- ═══════════ 1. Executive Summary ═══════════ -->
+<h2 style="font-size: 20px; color: #1a73e8; border-bottom: 2px solid #e8eaed; padding-bottom: 6px; margin-top: 32px;">1. Executive Summary</h2>
+
+<p style="font-size: 14px;">During a benchmark project comparing <strong>HydraDB vs ChromaDB vs Mem0</strong>, Claude Code (AI coding agent) repeatedly misconfigured HydraDB API calls. The root cause was <strong>documentation that doesn't match the actual API</strong>. Three specific discrepancies caused cascading failures:</p>
+
+<div style="background: #fce8e6; border-left: 4px solid #d93025; padding: 14px 18px; border-radius: 6px; margin: 16px 0;">
+  <p style="font-size: 14px; font-weight: 700; color: #a50e0e; margin: 0 0 6px 0;">The Core Problem</p>
+  <p style="font-size: 13px; color: #5f2120; margin: 0;">The docs at <code style="background: #f5c6c0; padding: 2px 5px; border-radius: 3px; font-size: 12px;">docs.hydradb.com/essentials/memories</code> show an API format that returns 404 when called. The actual working API uses different endpoints, field names, and payload structures.</p>
+</div>
+
+<table style="width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px;">
+  <tr>
+    <th style="background: #1a73e8; color: #fff; padding: 10px 12px; text-align: left; font-weight: 600;"></th>
+    <th style="background: #1a73e8; color: #fff; padding: 10px 12px; text-align: left; font-weight: 600;">Documentation Says</th>
+    <th style="background: #1a73e8; color: #fff; padding: 10px 12px; text-align: left; font-weight: 600;">API Actually Accepts</th>
+    <th style="background: #1a73e8; color: #fff; padding: 10px 12px; text-align: left; font-weight: 600;">Impact</th>
+  </tr>
+  <tr>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed; font-weight: 600;">Endpoint</td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed; color: #d93025; font-weight: 600;"><code style="font-size: 12px;">/memory/add</code></td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed; color: #1e8e3e; font-weight: 600;"><code style="font-size: 12px;">/memories/add_memory</code></td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed; color: #d93025;">404 Not Found</td>
+  </tr>
+  <tr style="background: #f8f9fa;">
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed; font-weight: 600;">Text field</td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed; color: #d93025; font-weight: 600;"><code style="font-size: 12px;">"content"</code></td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed; color: #1e8e3e; font-weight: 600;"><code style="font-size: 12px;">"text"</code></td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed; color: #d93025;">422 Validation Error</td>
+  </tr>
+  <tr>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed; font-weight: 600;">Structure</td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed; color: #d93025; font-weight: 600;">Flat object</td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed; color: #1e8e3e; font-weight: 600;"><code style="font-size: 12px;">{"memories": [...]}</code> array</td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed; color: #d93025;">422 "memories field required"</td>
+  </tr>
+  <tr style="background: #f8f9fa;">
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed; font-weight: 600;">User ID</td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed; color: #d93025; font-weight: 600;">Required at top level</td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed; color: #1e8e3e; font-weight: 600;">Optional</td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed; color: #e37400;">Minor</td>
+  </tr>
+</table>
+
+<br>
+
+<!-- ═══════════ 2. Documentation vs Reality ═══════════ -->
+<h2 style="font-size: 20px; color: #1a73e8; border-bottom: 2px solid #e8eaed; padding-bottom: 6px; margin-top: 32px;">2. The Documentation vs Reality</h2>
+
+<h3 style="font-size: 15px; color: #202124; margin-top: 20px;">What the docs show (<code style="font-size: 13px; background: #f1f3f4; padding: 2px 5px; border-radius: 3px;">docs.hydradb.com/essentials/memories</code>)</h3>
+
+<div style="background: #fce8e6; border: 1px solid #f5c6c0; border-radius: 8px; padding: 14px 18px; margin: 12px 0; font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap;"><span style="color: #80868b;"># Documentation example &mdash; DOES NOT WORK</span>
+curl -X POST https://api.hydradb.com/<span style="color: #d93025; font-weight: 700;">/memory/add</span> \
+  -H "Authorization: Bearer &lt;API_KEY&gt;" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tenant_id": "demo",
+    "user_id": "john",
+    <span style="color: #d93025; font-weight: 700;">"content"</span>: "John prefers dark mode and detailed technical explanations",
+    "infer": true
+  }'</div>
+
+<h3 style="font-size: 15px; color: #202124; margin-top: 20px;">What actually works (verified by testing)</h3>
+
+<div style="background: #e6f4ea; border: 1px solid #ceead6; border-radius: 8px; padding: 14px 18px; margin: 12px 0; font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap;"><span style="color: #80868b;"># Working API call &mdash; VERIFIED</span>
+curl -X POST https://api.hydradb.com/<span style="color: #1e8e3e; font-weight: 700;">/memories/add_memory</span> \
+  -H "Authorization: Bearer &lt;API_KEY&gt;" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tenant_id": "demo",
+    <span style="color: #1e8e3e; font-weight: 700;">"memories"</span>: [
+      {
+        <span style="color: #1e8e3e; font-weight: 700;">"text"</span>: "John prefers dark mode and detailed technical explanations",
+        "infer": true
+      }
+    ]
+  }'</div>
+
+<h3 style="font-size: 15px; color: #202124; margin-top: 20px;">Verification Tests Run</h3>
+
+<table style="width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px;">
+  <tr>
+    <th style="background: #1a73e8; color: #fff; padding: 10px 12px; text-align: left; font-weight: 600;">Test</th>
+    <th style="background: #1a73e8; color: #fff; padding: 10px 12px; text-align: left; font-weight: 600;">Endpoint</th>
+    <th style="background: #1a73e8; color: #fff; padding: 10px 12px; text-align: left; font-weight: 600;">Payload Format</th>
+    <th style="background: #1a73e8; color: #fff; padding: 10px 12px; text-align: left; font-weight: 600;">Result</th>
+  </tr>
+  <tr>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed;">Test 1</td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed;"><code style="font-size: 12px;">/memories/add_memory</code></td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed;">Flat with <code style="font-size: 12px;">content</code> + <code style="font-size: 12px;">infer</code></td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed; color: #d93025; font-weight: 600;">422 &mdash; "memories field required"</td>
+  </tr>
+  <tr style="background: #f8f9fa;">
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed;">Test 2</td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed;"><code style="font-size: 12px;">/memories/add_memory</code></td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed;">Array with <code style="font-size: 12px;">content</code> + <code style="font-size: 12px;">infer</code></td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed; color: #d93025; font-weight: 600;">422 &mdash; "text or user_assistant_pairs required"</td>
+  </tr>
+  <tr>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed;">Test 3</td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed;"><code style="font-size: 12px;">/memories/add_memory</code></td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed;">Array with <code style="font-size: 12px;">text</code> + <code style="font-size: 12px;">infer</code></td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed; color: #1e8e3e; font-weight: 600;">200 &mdash; "queued", infer: true</td>
+  </tr>
+</table>
+
+<br>
+
+<!-- ═══════════ 3. Timeline of Errors ═══════════ -->
+<h2 style="font-size: 20px; color: #1a73e8; border-bottom: 2px solid #e8eaed; padding-bottom: 6px; margin-top: 32px;">3. Timeline of Errors</h2>
+
+<div style="border-left: 4px solid #d93025; background: #fef7f6; padding: 12px 18px; margin: 14px 0; border-radius: 0 6px 6px 0;">
+  <p style="font-size: 14px; font-weight: 700; color: #d93025; margin: 0 0 4px 0;">Stage 1: Uploaded as knowledge (PDF), not memories</p>
+  <p style="font-size: 13px; color: #5f2120; margin: 0;">Agent used <code style="font-size: 12px; background: #f5c6c0; padding: 2px 5px; border-radius: 3px;">/ingestion/upload_knowledge</code> to upload relationship timeline as a PDF file. Knowledge and memories are different data types in HydraDB with different search endpoints.</p>
+</div>
+
+<div style="border-left: 4px solid #d93025; background: #fef7f6; padding: 12px 18px; margin: 14px 0; border-radius: 0 6px 6px 0;">
+  <p style="font-size: 14px; font-weight: 700; color: #d93025; margin: 0 0 4px 0;">Stage 2: Searched via deprecated <code style="font-size: 13px;">/recall/qna</code></p>
+  <p style="font-size: 13px; color: #5f2120; margin: 0;">Since data was uploaded as knowledge, agent used <code style="font-size: 12px; background: #f5c6c0; padding: 2px 5px; border-radius: 3px;">/recall/qna</code> (the knowledge search endpoint). This endpoint was deprecated long ago. No results returned.</p>
+</div>
+
+<div style="border-left: 4px solid #e37400; background: #fffcf5; padding: 12px 18px; margin: 14px 0; border-radius: 0 6px 6px 0;">
+  <p style="font-size: 14px; font-weight: 700; color: #e37400; margin: 0 0 4px 0;">Stage 3: User flagged the wrong endpoint</p>
+  <p style="font-size: 13px; color: #5f4b00; margin: 0;">HydraDB team member pointed out: <em>"Use <code style="font-size: 12px;">/recall/recall_preferences</code>, the <code style="font-size: 12px;">/recall/qna</code> endpoint was deprecated long back."</em> Agent switched search endpoint but data was still uploaded as knowledge.</p>
+</div>
+
+<div style="border-left: 4px solid #1e8e3e; background: #f6fef8; padding: 12px 18px; margin: 14px 0; border-radius: 0 6px 6px 0;">
+  <p style="font-size: 14px; font-weight: 700; color: #1e8e3e; margin: 0 0 4px 0;">Stage 4: Re-ingested as memories via <code style="font-size: 13px;">/memories/add_memory</code></p>
+  <p style="font-size: 13px; color: #0d5c23; margin: 0;">Changed from <code style="font-size: 12px;">upload_knowledge(pdf)</code> to <code style="font-size: 12px;">add_memories([{"text": chunk}])</code>. Now <code style="font-size: 12px;">recall_preferences</code> found the data correctly.</p>
+</div>
+
+<div style="border-left: 4px solid #d93025; background: #fef7f6; padding: 12px 18px; margin: 14px 0; border-radius: 0 6px 6px 0;">
+  <p style="font-size: 14px; font-weight: 700; color: #d93025; margin: 0 0 4px 0;">Stage 5: Tried to follow docs for <code style="font-size: 13px;">infer</code> flag</p>
+  <p style="font-size: 13px; color: #5f2120; margin: 0;">Read docs at <code style="font-size: 12px;">docs.hydradb.com/essentials/memories</code>. Docs showed <code style="font-size: 12px;">/memory/add</code> with <code style="font-size: 12px;">"content"</code> field. Agent rewrote client to match docs. Got 404.</p>
+</div>
+
+<div style="border-left: 4px solid #1e8e3e; background: #f6fef8; padding: 12px 18px; margin: 14px 0; border-radius: 0 6px 6px 0;">
+  <p style="font-size: 14px; font-weight: 700; color: #1e8e3e; margin: 0 0 4px 0;">Stage 6: Brute-force tested all three formats</p>
+  <p style="font-size: 13px; color: #0d5c23; margin: 0;">Tested flat vs array, <code style="font-size: 12px;">content</code> vs <code style="font-size: 12px;">text</code>, with and without <code style="font-size: 12px;">infer</code>. Found that original format with <code style="font-size: 12px;">text</code> field + <code style="font-size: 12px;">infer</code> inside array items works.</p>
+</div>
+
+<br>
+
+<!-- ═══════════ 4. Root Cause Analysis ═══════════ -->
+<h2 style="font-size: 20px; color: #1a73e8; border-bottom: 2px solid #e8eaed; padding-bottom: 6px; margin-top: 32px;">4. Root Cause Analysis</h2>
+
+<table style="width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px;">
+  <tr>
+    <th style="background: #1a73e8; color: #fff; padding: 10px 12px; text-align: left; font-weight: 600;">Decision</th>
+    <th style="background: #1a73e8; color: #fff; padding: 10px 12px; text-align: left; font-weight: 600;">Why It Was Wrong</th>
+    <th style="background: #1a73e8; color: #fff; padding: 10px 12px; text-align: left; font-weight: 600;">Root Cause</th>
+  </tr>
+  <tr>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed;">Uploaded as <strong>knowledge</strong> (PDF)</td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed;">The data was relationship memories/events, not reference documents. Memories are the right data type for personal timeline data.</td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed; color: #d93025; font-weight: 600;">Agent didn't understand memories vs knowledge taxonomy in HydraDB</td>
+  </tr>
+  <tr style="background: #f8f9fa;">
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed;">Searched via <code style="font-size: 12px;">/recall/qna</code></td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed;">This was the matching endpoint for knowledge, but it was deprecated.</td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed; color: #d93025; font-weight: 600;">No deprecation warning returned by the API &mdash; silent failure</td>
+  </tr>
+  <tr>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed;">Trusted docs for <code style="font-size: 12px;">infer</code> flag format</td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed;">Docs showed <code style="font-size: 12px;">/memory/add</code> with <code style="font-size: 12px;">content</code> &mdash; doesn't exist.</td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed; color: #d93025; font-weight: 600;">Documentation doesn't match the API</td>
+  </tr>
+  <tr style="background: #f8f9fa;">
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed;">Treated HydraDB like a generic vector DB</td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed;">Didn't learn its data model.</td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed; color: #e37400; font-weight: 600;">No OpenAPI spec or SDK with type hints to guide the agent</td>
+  </tr>
+</table>
+
+<p style="font-size: 11px; color: #9aa0a6;">Source doc: <code style="font-size: 11px;">https://docs.hydradb.com/essentials/memories</code></p>
+
+<br>
+
+<!-- ═══════════ 5. The infer Flag ═══════════ -->
+<h2 style="font-size: 20px; color: #1a73e8; border-bottom: 2px solid #e8eaed; padding-bottom: 6px; margin-top: 32px;">5. The <code style="font-size: 18px;">infer</code> Flag &mdash; What It Actually Does</h2>
+
+<p style="font-size: 14px;">The <code style="font-size: 13px; background: #f1f3f4; padding: 2px 5px; border-radius: 3px;">infer</code> flag is a per-memory ingestion parameter that controls how HydraDB processes data:</p>
+
+<table style="width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px;">
+  <tr>
+    <th style="background: #1e8e3e; color: #fff; padding: 10px 12px; text-align: left; font-weight: 600; width: 50%;"><code style="color: #fff; background: transparent; border: none;">infer: true</code></th>
+    <th style="background: #d93025; color: #fff; padding: 10px 12px; text-align: left; font-weight: 600; width: 50%;"><code style="color: #fff; background: transparent; border: none;">infer: false</code></th>
+  </tr>
+  <tr>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed; background: #f6fef8;">Extracts entities (people, places, events)</td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed; background: #fef7f6;">Stores content as-is</td>
+  </tr>
+  <tr>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed; background: #f6fef8;">Resolves pronouns via sliding window ("He" &rarr; "Harnoor")</td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed; background: #fef7f6;">No pronoun resolution</td>
+  </tr>
+  <tr>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed; background: #f6fef8;">Builds graph edges (<code style="font-size: 12px;">MENTIONED_IN</code>, <code style="font-size: 12px;">NEXT</code>, <code style="font-size: 12px;">CO_OCCURS</code>)</td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed; background: #fef7f6;">No graph construction</td>
+  </tr>
+  <tr>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed; background: #f6fef8;">Creates inferred embeddings (separate from dense + BM25)</td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed; background: #fef7f6;">Only dense + BM25 embeddings</td>
+  </tr>
+  <tr>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed; background: #f6fef8;">Extracts structured preferences</td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed; background: #fef7f6;">No preference extraction</td>
+  </tr>
+</table>
+
+<h3 style="font-size: 15px; color: #202124; margin-top: 20px;">Where <code style="font-size: 14px;">infer</code> goes in the payload</h3>
+
+<p style="font-size: 14px;">Inside each memory item in the array, <strong>NOT</strong> at the top level:</p>
+
+<div style="background: #f1f3f4; border: 1px solid #dadce0; border-radius: 8px; padding: 14px 18px; margin: 12px 0; font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.7; white-space: pre-wrap;">{
+  "tenant_id": "live_benchmark",
+  "memories": [
+    {
+      "text": "Katie surprised Harnoor with a birthday celebration on December 23, 2020.",
+      <span style="color: #1e8e3e; font-weight: 700;">"infer": true</span>   <span style="color: #80868b;">// &larr; HERE, per memory item</span>
+    }
+  ]
+}</div>
+
+<div style="background: #e8f0fe; border-left: 4px solid #1a73e8; padding: 14px 18px; border-radius: 0 6px 6px 0; margin: 16px 0;">
+  <p style="font-size: 14px; font-weight: 700; color: #174ea6; margin: 0 0 4px 0;">Key Insight</p>
+  <p style="font-size: 13px; color: #174ea6; margin: 0;">During recall, HydraDB uses a weighted hybrid search across all three embedding types: <strong>dense + inferred + BM25</strong>. Without <code style="font-size: 12px;">infer: true</code> at ingestion, the inferred embeddings and graph edges don't exist, and retrieval quality degrades.</p>
+</div>
+
+<br>
+
+<!-- ═══════════ 6. Verified Working API Reference ═══════════ -->
+<h2 style="font-size: 20px; color: #1a73e8; border-bottom: 2px solid #e8eaed; padding-bottom: 6px; margin-top: 32px;">6. Verified Working API Reference</h2>
+
+<h3 style="font-size: 15px; color: #202124; margin-top: 20px;">Add Memories</h3>
+<p><span style="background: #e8f0fe; color: #1a73e8; font-weight: 700; padding: 4px 10px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 13px;">POST /memories/add_memory</span></p>
+
+<div style="background: #f1f3f4; border: 1px solid #dadce0; border-radius: 8px; padding: 14px 18px; margin: 12px 0; font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.7; white-space: pre-wrap;">{
+  "tenant_id": "your_tenant",
+  "memories": [
+    {"text": "memory content here", "infer": true},
+    {"text": "another memory", "infer": true}
+  ]
+}
+
+<span style="color: #80868b;">// Response:</span>
+{
+  "success": true,
+  "results": [
+    {"source_id": "uuid", "status": "queued", "infer": true}
+  ]
+}</div>
+
+<h3 style="font-size: 15px; color: #202124; margin-top: 20px;">Recall Preferences</h3>
+<p><span style="background: #e8f0fe; color: #1a73e8; font-weight: 700; padding: 4px 10px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 13px;">POST /recall/recall_preferences</span></p>
+
+<div style="background: #f1f3f4; border: 1px solid #dadce0; border-radius: 8px; padding: 14px 18px; margin: 12px 0; font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.7; white-space: pre-wrap;">{
+  "tenant_id": "your_tenant",
+  "query": "What car did they buy?",
+  "max_results": 5
+}
+
+<span style="color: #80868b;">// Returns ranked chunks via hybrid search (dense + inferred + BM25)</span></div>
+
+<h3 style="font-size: 15px; color: #202124; margin-top: 20px;">Other Recall Endpoints</h3>
+
+<table style="width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px;">
+  <tr>
+    <th style="background: #1a73e8; color: #fff; padding: 10px 12px; text-align: left; font-weight: 600;">Endpoint</th>
+    <th style="background: #1a73e8; color: #fff; padding: 10px 12px; text-align: left; font-weight: 600;">Method</th>
+    <th style="background: #1a73e8; color: #fff; padding: 10px 12px; text-align: left; font-weight: 600;">Use Case</th>
+  </tr>
+  <tr>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed;"><code style="font-size: 12px;">/recall/recall_preferences</code></td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed;">Hybrid</td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed;">Memory/preference recall <strong>(primary)</strong></td>
+  </tr>
+  <tr style="background: #f8f9fa;">
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed;"><code style="font-size: 12px;">/recall/full_recall</code></td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed;">Hybrid</td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed;">Full hybrid vector + graph + BM25</td>
+  </tr>
+  <tr>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed;"><code style="font-size: 12px;">/recall/boolean_recall</code></td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed;">BM25</td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed;">Full-text keyword search</td>
+  </tr>
+  <tr style="background: #fef7f6;">
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed; color: #d93025; font-weight: 600;"><code style="font-size: 12px; color: #d93025;">/recall/qna</code></td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed; color: #d93025; font-weight: 600;">Deprecated</td>
+    <td style="padding: 10px 12px; border-bottom: 1px solid #e8eaed; color: #d93025; font-weight: 600; font-style: italic;">Do not use &mdash; removed</td>
+  </tr>
+</table>
+
+<br>
+
+<!-- ═══════════ 7. Recommendations ═══════════ -->
+<h2 style="font-size: 20px; color: #1a73e8; border-bottom: 2px solid #e8eaed; padding-bottom: 6px; margin-top: 32px;">7. Recommendations for HydraDB Team</h2>
+
+<div style="background: #fef7e0; border-left: 4px solid #e37400; padding: 14px 18px; border-radius: 0 6px 6px 0; margin: 16px 0;">
+  <p style="font-size: 14px; font-weight: 700; color: #b06000; margin: 0 0 4px 0;">Documentation Fixes Needed</p>
+  <p style="font-size: 13px; color: #7a4a00; margin: 0;">These are UX/documentation issues that will affect every developer and AI agent integrating HydraDB:</p>
+</div>
+
+<ol style="font-size: 14px; padding-left: 24px;">
+  <li style="margin-bottom: 14px;">
+    <strong style="color: #d93025;">Fix the docs at <code style="font-size: 13px;">docs.hydradb.com/essentials/memories</code></strong><br>
+    <span style="font-size: 13px; color: #5f6368;">Update endpoint from <code style="font-size: 12px;">/memory/add</code> to <code style="font-size: 12px;">/memories/add_memory</code>, field from <code style="font-size: 12px;">content</code> to <code style="font-size: 12px;">text</code>, and structure from flat object to <code style="font-size: 12px;">memories</code> array.</span>
+  </li>
+  <li style="margin-bottom: 14px;">
+    <strong style="color: #e37400;">Return deprecation errors, not silent failures</strong><br>
+    <span style="font-size: 13px; color: #5f6368;">If <code style="font-size: 12px;">/recall/qna</code> is deprecated, return a clear error message pointing users to <code style="font-size: 12px;">/recall/recall_preferences</code>. Don't silently return empty results.</span>
+  </li>
+  <li style="margin-bottom: 14px;">
+    <strong style="color: #1a73e8;">Document the memories vs knowledge data model</strong><br>
+    <span style="font-size: 13px; color: #5f6368;">Prominently explain: <em>"Uploaded memories? Use <code style="font-size: 12px;">recall_preferences</code>. Uploaded knowledge files? Use <code style="font-size: 12px;">full_recall</code>."</em></span>
+  </li>
+  <li style="margin-bottom: 14px;">
+    <strong style="color: #1a73e8;">Publish an OpenAPI spec</strong><br>
+    <span style="font-size: 13px; color: #5f6368;">A machine-readable spec would let AI coding agents (and IDE autocomplete) discover the correct endpoints, field names, and types automatically.</span>
+  </li>
+  <li style="margin-bottom: 14px;">
+    <strong style="color: #1e8e3e;">Surface the correct recall endpoint in ingestion responses</strong><br>
+    <span style="font-size: 13px; color: #5f6368;">When a user uploads memories, the response could include: <code style="font-size: 12px;">"recall_endpoint": "/recall/recall_preferences"</code></span>
+  </li>
+</ol>
+
+<br>
+
+<!-- ═══════════ 8. Lessons ═══════════ -->
+<h2 style="font-size: 20px; color: #1a73e8; border-bottom: 2px solid #e8eaed; padding-bottom: 6px; margin-top: 32px;">8. Lessons for AI Coding Agents</h2>
+
+<h3 style="font-size: 15px; color: #202124; margin-top: 16px;">What the agent should have done differently</h3>
+<p style="font-size: 13px; color: #5f6368; margin-bottom: 12px;">These patterns would have caught the issue earlier:</p>
+
+<div style="background: #fef7e0; border-left: 4px solid #e37400; padding: 12px 18px; border-radius: 0 6px 6px 0; margin: 10px 0;">
+  <p style="font-size: 13px; margin: 0;"><strong style="color: #b06000;">Test before trusting docs.</strong> <span style="color: #5f4b00;">Always make a test API call before building an entire client around documentation. Docs can be wrong.</span></p>
+</div>
+
+<div style="background: #e8f0fe; border-left: 4px solid #1a73e8; padding: 12px 18px; border-radius: 0 6px 6px 0; margin: 10px 0;">
+  <p style="font-size: 13px; margin: 0;"><strong style="color: #174ea6;">Check for OpenAPI specs first.</strong> <span style="color: #174ea6;">Machine-readable specs are more reliable than prose documentation.</span></p>
+</div>
+
+<div style="background: #e6f4ea; border-left: 4px solid #1e8e3e; padding: 12px 18px; border-radius: 0 6px 6px 0; margin: 10px 0;">
+  <p style="font-size: 13px; margin: 0;"><strong style="color: #137333;">Ask the user about data model taxonomy.</strong> <span style="color: #0d5c23;">"Is this memories or knowledge?" would have prevented the initial misclassification.</span></p>
+</div>
+
+<div style="background: #fef7e0; border-left: 4px solid #e37400; padding: 12px 18px; border-radius: 0 6px 6px 0; margin: 10px 0;">
+  <p style="font-size: 13px; margin: 0;"><strong style="color: #b06000;">When an endpoint returns empty results, investigate.</strong> <span style="color: #5f4b00;">Don't assume the data isn't there &mdash; check if you're using the wrong search endpoint.</span></p>
+</div>
+
+</body>
+</html>

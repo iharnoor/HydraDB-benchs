@@ -1,0 +1,42 @@
+[
+  {
+    "name": "Buried detail in rich context",
+    "question": "What car did Harnoor and Katie buy together?",
+    "expected": "White Tesla Model 3",
+    "hydra_ai_answer": "Harnoor and Katie bought a white Tesla Model 3 together.",
+    "chroma_ai_answer": "Harnoor and Katie bought a white Tesla Model 3 together.",
+    "judgment": "WINNER: TIE\nSCORE_A: 10\nSCORE_B: 10\nREASONING: Both System A and System B provided answers that are identical to each other and perfectly match the expected answer in terms of correctness, precision, and completeness. They both accurately state the car's color, make, and model, and do not include any extraneous or incorrect information."
+  },
+  {
+    "name": "Relationship milestone inference",
+    "question": "What was the significance of Harnoor and Katie attending a wedding together?",
+    "expected": "It signaled deeper commitment \u2014 being invited to important life events as a unit",
+    "hydra_ai_answer": "Attending their first American wedding together was a significant cultural milestone for Harnoor and signaled a deeper level of commitment as a couple, as they were invited to important life events as a unit.",
+    "chroma_ai_answer": "Attending their first American wedding together was a significant cultural milestone for Harnoor and signaled a deeper level of commitment as they were invited to important life events as a couple.",
+    "judgment": "WINNER: A\nSCORE_A: 10\nSCORE_B: 9\nREASONING: Both systems correctly identify the significance as signaling deeper commitment due to being invited to important life events. System A precisely matches the expected answer's phrasing \"as a unit\" for the invitation context, whereas System B uses the synonymous \"as a couple.\" Both answers include additional contextual information that is not wrong or misleading."
+  },
+  {
+    "name": "Negation \u2014 not a birthday",
+    "question": "What did Harnoor and Katie celebrate together that was NOT a birthday?",
+    "expected": "Navratri, July 4th, Valentine's Day, Thanksgiving, Christmas, New Year's, wedding",
+    "hydra_ai_answer": "Harnoor and Katie celebrated Navratri and the Fourth of July together.",
+    "chroma_ai_answer": "Harnoor and Katie celebrated Valentine's Day together.",
+    "judgment": "WINNER: A\nSCORE_A: 7\nSCORE_B: 5\nREASONING: System A correctly identified two non-birthday celebrations (Navratri and Fourth of July) from the expected answer list. System B only identified one (Valentine's Day). Both systems provided correct information, but System A was more complete in its recall of distinct celebrations."
+  },
+  {
+    "name": "One-directional cultural adoption",
+    "question": "Which of Harnoor's Indian traditions did Katie participate in?",
+    "expected": "Navratri (wore lehenga, danced Garba), wore Indian clothing at Taj Mahal",
+    "hydra_ai_answer": "Katie participated in the Indian tradition of celebrating Navratri, including dressing in traditional attire and performing the Garba dance.",
+    "chroma_ai_answer": "Katie participated in Harnoor's Indian tradition of celebrating Navratri and dancing Garba.",
+    "judgment": "WINNER: A\nSCORE_A: 8\nSCORE_B: 6\nREASONING: System A is more complete as it correctly identifies Navratri, Garba dance, and dressing in traditional attire. System B misses the detail about wearing traditional attire. Both systems fail to mention Katie wearing Indian clothing at the Taj Mahal."
+  },
+  {
+    "name": "Exhaustive listing",
+    "question": "List every holiday or celebration Harnoor and Katie shared together",
+    "expected": "Harnoor's birthday, Katie's birthday, NYE 2021, NYE 2022, Valentine's Day, Navratri, July 4th, Thanksgiving, Christmas, wedding attendance",
+    "hydra_ai_answer": "Harnoor and Katie shared Harnoor's Birthday (December 2020), Christmas (in 2020 and 2021), Katie's Birthday (March 2021), and the Fourth of July (July 2021).",
+    "chroma_ai_answer": "Harnoor and Katie shared Christmas, Thanksgiving, Katie's birthday, Harnoor's birthday, and Valentine's Day.",
+    "judgment": "WINNER: B\nSCORE_A: 4\nSCORE_B: 5\nREASONING: System B is slightly more complete than System A, listing 5 of the 10 expected holidays/celebrations compared to System A's 4. Both systems demonstrate good precision by only including correct information from the expected answer and not introducing any inaccuracies."
+  }
+]

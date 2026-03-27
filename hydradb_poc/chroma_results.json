@@ -1,26 +1,33 @@
 {
   "summary": {
     "chromadb": {
-      "avg_latency_ms": 46.6,
-      "p50_latency_ms": 45.5,
-      "min_latency_ms": 44.4,
-      "max_latency_ms": 54.4,
+      "avg_latency_ms": 54.0,
+      "p50_latency_ms": 47.3,
+      "min_latency_ms": 44.9,
+      "max_latency_ms": 101.9,
       "errors": 0,
       "total": 19,
       "type": "Pure vector (cosine similarity)",
       "embedding_model": "all-MiniLM-L6-v2 (Chroma default)",
-      "location": "Local (in-memory)"
+      "location": "Local (in-memory)",
+      "avg_recall_at_5": 0.6632,
+      "avg_mrr": 0.5737,
+      "wins": 3
     },
     "hydradb": {
-      "avg_latency_ms": 609,
-      "p50_latency_ms": 532,
-      "min_latency_ms": 479,
-      "max_latency_ms": 1271,
+      "avg_latency_ms": 571,
+      "p50_latency_ms": 513,
+      "min_latency_ms": 437,
+      "max_latency_ms": 934,
       "errors": 0,
       "total": 19,
       "type": "Hybrid (vector + graph + BM25)",
-      "location": "Cloud API"
-    }
+      "location": "Cloud API",
+      "avg_recall_at_5": 0.7632,
+      "avg_mrr": 0.6623,
+      "wins": 7
+    },
+    "ties": 9
   },
   "comparison": [
     {
@@ -29,14 +36,25 @@
       "question": "When did Harnoor and Katie meet for the second time?",
       "expected": "October 18, 2020",
       "chroma_answer": "October 18, 2020 - Meeting for the Second Time: Harnoor and Katie met for the second time on October 18, 2020. They had first connected earlier that m | January 1, 2021 - Traveling to Miami, New Year's Trip: On January 1, 2021, Harnoor and Katie traveled to Miami together to ring in the New Year. This  | April 19, 2021 - Revisiting the Place of Their First Date: On April 19, 2021, Harnoor and Katie went back to the location of their very first date. Th",
-      "chroma_latency_ms": 54.4,
+      "chroma_latency_ms": 101.9,
       "chroma_chunks": 5,
       "chroma_error": "",
-      "hydra_answer": "October 18, 2020 - Meeting for the Second Time: Harnoor and Katie met for the second time on October 18, 2020. They had first connected earlier that m | Harnoor and Katie met for the second time on October 18, 2020. They had first connected earlier that month through mutual friends at Florida State Uni | October 18, 2020 - Meeting for the Second Time: Harnoor and Katie met for the second time on October 18, 2020. They had first connected earlier that m",
-      "hydra_latency_ms": 947,
+      "chroma_recall_at_5": 1.0,
+      "chroma_mrr": 1.0,
+      "hydra_answer": "October 18, 2020 - Meeting for the Second Time: Harnoor and Katie met for the second time on October 18, 2020. They had first connected earlier that m | November 2, 2020 - First Car Date: On November 2, 2020, Harnoor and Katie went on their first car date. Katie was driving, and Harnoor sat in the pass | December 23, 2020 - Harnoor's Birthday Celebration: Katie surprised Harnoor with a birthday celebration on December 23, 2020. This was their first bir",
+      "hydra_latency_ms": 864,
       "hydra_chunks": 5,
       "hydra_error": "",
-      "why_matters": "Exact date retrieval from a specific memory"
+      "hydra_recall_at_5": 1.0,
+      "hydra_mrr": 1.0,
+      "winner": "tie",
+      "why_matters": "Exact date retrieval from a specific memory",
+      "gold_keywords": [
+        [
+          "October 18, 2020",
+          "second time"
+        ]
+      ]
     },
     {
       "category": "Information Extraction",
@@ -44,14 +62,24 @@
       "question": "What car did Harnoor and Katie buy together?",
       "expected": "White Tesla Model 3",
       "chroma_answer": "May 7, 2022 - Buying a Car Together, Tesla Model 3: On May 7, 2022, Harnoor and Katie bought a car together - a white Tesla Model 3. They posed at the | January 1, 2021 - Traveling to Miami, New Year's Trip: On January 1, 2021, Harnoor and Katie traveled to Miami together to ring in the New Year. This  | November 2, 2020 - First Car Date: On November 2, 2020, Harnoor and Katie went on their first car date. Katie was driving, and Harnoor sat in the pass",
-      "chroma_latency_ms": 53.0,
+      "chroma_latency_ms": 99.6,
       "chroma_chunks": 5,
       "chroma_error": "",
-      "hydra_answer": "On May 7, 2022, Harnoor and Katie bought a car together \u2014 a white Tesla Model 3. They posed at the Tesla dealership with an employee handing over the  | May 7, 2022 - Buying a Car Together, Tesla Model 3: On May 7, 2022, Harnoor and Katie bought a car together - a white Tesla Model 3. They posed at the | May 7, 2022 - Buying a Car Together, Tesla Model 3: On May 7, 2022, Harnoor and Katie bought a car together - a white Tesla Model 3. They posed at the",
-      "hydra_latency_ms": 543,
+      "chroma_recall_at_5": 1.0,
+      "chroma_mrr": 1.0,
+      "hydra_answer": "November 2, 2020 - First Car Date: On November 2, 2020, Harnoor and Katie went on their first car date. Katie was driving, and Harnoor sat in the pass | December 23, 2020 - Harnoor's Birthday Celebration: Katie surprised Harnoor with a birthday celebration on December 23, 2020. This was their first bir | May 7, 2022 - Buying a Car Together, Tesla Model 3: On May 7, 2022, Harnoor and Katie bought a car together - a white Tesla Model 3. They posed at the",
+      "hydra_latency_ms": 649,
       "hydra_chunks": 5,
       "hydra_error": "",
-      "why_matters": "Specific fact (car model + color) buried in descriptive paragraph"
+      "hydra_recall_at_5": 1.0,
+      "hydra_mrr": 0.3333,
+      "winner": "chroma",
+      "why_matters": "Specific fact (car model + color) buried in descriptive paragraph",
+      "gold_keywords": [
+        [
+          "Tesla Model 3"
+        ]
+      ]
     },
     {
       "category": "Information Extraction",
@@ -59,14 +87,25 @@
       "question": "What did Katie wear for Navratri?",
       "expected": "Red and green lehenga with traditional jewelry",
       "chroma_answer": "October 15, 2021 - Celebrating Navratri Together: On October 15, 2021, Harnoor and Katie celebrated Navratri together - a major Hindu festival. They b | January 1, 2022 - New Year's in Miami, South Beach: Harnoor and Katie rang in the New Year of 2022 on South Beach in Miami. They took a selfie on Ocea | December 25, 2021 - Christmas Together: Harnoor and Katie celebrated Christmas together on December 25, 2021. They posed by a decorated Christmas tree",
-      "chroma_latency_ms": 49.6,
+      "chroma_latency_ms": 68.3,
       "chroma_chunks": 5,
       "chroma_error": "",
-      "hydra_answer": "October 15, 2021 \u2014 Katie celebrated Navratri with Harnoor, wore a red and green lehenga, and danced Garba. She fully embraced Indian culture. | On October 15, 2021, Harnoor and Katie celebrated Navratri together. They both dressed in traditional Indian attire and held dandiya sticks for the Ga | October 15, 2021 - Celebrating Navratri Together: On October 15, 2021, Harnoor and Katie celebrated Navratri together - a major Hindu festival. They b",
-      "hydra_latency_ms": 540,
+      "chroma_recall_at_5": 1.0,
+      "chroma_mrr": 1.0,
+      "hydra_answer": "October 15, 2021 - Celebrating Navratri Together: On October 15, 2021, Harnoor and Katie celebrated Navratri together - a major Hindu festival. They b | December 25, 2021 - Christmas Together: Harnoor and Katie celebrated Christmas together on December 25, 2021. They posed by a decorated Christmas tree | March 2022 - Visiting the Taj Mahal in India: During their India trip in March 2022, Harnoor and Katie visited the Taj Mahal in Agra. Katie wore a bea",
+      "hydra_latency_ms": 613,
       "hydra_chunks": 5,
       "hydra_error": "",
-      "why_matters": "Specific clothing detail from a cultural event description"
+      "hydra_recall_at_5": 1.0,
+      "hydra_mrr": 1.0,
+      "winner": "tie",
+      "why_matters": "Specific clothing detail from a cultural event description",
+      "gold_keywords": [
+        [
+          "lehenga",
+          "Navratri"
+        ]
+      ]
     },
     {
       "category": "Multi-Session Reasoning",
@@ -74,14 +113,30 @@
       "question": "How did Harnoor and Katie's relationship progress from casual dating to major commitments?",
       "expected": "First car date Nov 2020 \u2192 first formal dinner Valentine's 2021 \u2192 bought a Tesla together May 2022",
       "chroma_answer": "This document chronicles the relationship journey of Harnoor Singh and Katie, from their second meeting in October 2020 through buying a car together  | October 18, 2020 - Meeting for the Second Time: Harnoor and Katie met for the second time on October 18, 2020. They had first connected earlier that m | January 1, 2021 - Traveling to Miami, New Year's Trip: On January 1, 2021, Harnoor and Katie traveled to Miami together to ring in the New Year. This ",
-      "chroma_latency_ms": 45.6,
+      "chroma_latency_ms": 50.7,
       "chroma_chunks": 5,
       "chroma_error": "",
-      "hydra_answer": "This document chronicles the relationship journey of Harnoor Singh and Katie, from their second meeting in October 2020 through buying a car together  | This document chronicles the relationship journey of Harnoor Singh and Katie, from their second meeting in October 2020 through buying a car together  | This document chronicles the relationship journey of Harnoor Singh and Katie, from their second meeting in October 2020 through buying a car together ",
-      "hydra_latency_ms": 555,
+      "chroma_recall_at_5": 0.0,
+      "chroma_mrr": 0.0,
+      "hydra_answer": "February 14, 2021 - First Valentine's Day Dinner: Harnoor and Katie celebrated their first Valentine's Day together on February 14, 2021. They went to | October 18, 2020 - Meeting for the Second Time: Harnoor and Katie met for the second time on October 18, 2020. They had first connected earlier that m | March 16, 2021 - Katie's Birthday: Harnoor celebrated Katie's birthday on March 16, 2021. He got her a beautiful white layered birthday cake that read",
+      "hydra_latency_ms": 475,
       "hydra_chunks": 5,
       "hydra_error": "",
-      "why_matters": "Requires combining 3+ memories to show relationship arc"
+      "hydra_recall_at_5": 0.3333,
+      "hydra_mrr": 1.0,
+      "winner": "hydra",
+      "why_matters": "Requires combining 3+ memories to show relationship arc",
+      "gold_keywords": [
+        [
+          "first car date"
+        ],
+        [
+          "Valentine"
+        ],
+        [
+          "Tesla"
+        ]
+      ]
     },
     {
       "category": "Multi-Session Reasoning",
@@ -89,14 +144,32 @@
       "question": "How did Harnoor and Katie embrace each other's cultures?",
       "expected": "Katie: Navratri/lehenga/Garba, wore Indian clothing at Taj Mahal. Harnoor: Thanksgiving with Katie's family, Christmas together.",
       "chroma_answer": "This document chronicles the relationship journey of Harnoor Singh and Katie, from their second meeting in October 2020 through buying a car together  | August 21, 2021 - Attending Their First American Wedding Together: On August 21, 2021, Harnoor and Katie attended their first American wedding togethe | October 15, 2021 - Celebrating Navratri Together: On October 15, 2021, Harnoor and Katie celebrated Navratri together - a major Hindu festival. They b",
-      "chroma_latency_ms": 47.8,
+      "chroma_latency_ms": 48.8,
       "chroma_chunks": 5,
       "chroma_error": "",
-      "hydra_answer": "This document chronicles the relationship journey of Harnoor Singh and Katie, from their second meeting in October 2020 through buying a car together  | This document chronicles the relationship journey of Harnoor Singh and Katie, from their second meeting in October 2020 through buying a car together  | On October 15, 2021, Harnoor and Katie celebrated Navratri together. They both dressed in traditional Indian attire and held dandiya sticks for the Ga",
-      "hydra_latency_ms": 514,
+      "chroma_recall_at_5": 0.3333,
+      "chroma_mrr": 0.3333,
+      "hydra_answer": "October 15, 2021 - Celebrating Navratri Together: On October 15, 2021, Harnoor and Katie celebrated Navratri together - a major Hindu festival. They b | March 16, 2021 - Katie's Birthday: Harnoor celebrated Katie's birthday on March 16, 2021. He got her a beautiful white layered birthday cake that read | December 25, 2021 - Christmas Together: Harnoor and Katie celebrated Christmas together on December 25, 2021. They posed by a decorated Christmas tree",
+      "hydra_latency_ms": 518,
       "hydra_chunks": 5,
       "hydra_error": "",
-      "why_matters": "Must combine cultural exchange moments across multiple memories"
+      "hydra_recall_at_5": 0.6667,
+      "hydra_mrr": 1.0,
+      "winner": "hydra",
+      "why_matters": "Must combine cultural exchange moments across multiple memories",
+      "gold_keywords": [
+        [
+          "Navratri",
+          "lehenga"
+        ],
+        [
+          "Thanksgiving",
+          "Katie's family"
+        ],
+        [
+          "Taj Mahal"
+        ]
+      ]
     },
     {
       "category": "Temporal Reasoning",
@@ -104,14 +177,29 @@
       "question": "How many times did Harnoor and Katie go to Miami for New Year's?",
       "expected": "Twice \u2014 January 2021 and January 2022",
       "chroma_answer": "January 1, 2021 - Traveling to Miami, New Year's Trip: On January 1, 2021, Harnoor and Katie traveled to Miami together to ring in the New Year. This  | January 1, 2022 - New Year's in Miami, South Beach: Harnoor and Katie rang in the New Year of 2022 on South Beach in Miami. They took a selfie on Ocea | October 18, 2020 - Meeting for the Second Time: Harnoor and Katie met for the second time on October 18, 2020. They had first connected earlier that m",
-      "chroma_latency_ms": 44.5,
+      "chroma_latency_ms": 46.3,
       "chroma_chunks": 5,
       "chroma_error": "",
-      "hydra_answer": "January 1, 2021 \u2014 Harnoor and Katie traveled to Miami for New Year's. First trip as a couple. Only 2.5 months into dating. | January 1, 2022 - New Year's in Miami, South Beach: Harnoor and Katie rang in the New Year of 2022 on South Beach in Miami. They took a selfie on Ocea | January 1, 2022 - New Year's in Miami, South Beach: Harnoor and Katie rang in the New Year of 2022 on South Beach in Miami. They took a selfie on Ocea",
-      "hydra_latency_ms": 547,
+      "chroma_recall_at_5": 1.0,
+      "chroma_mrr": 1.0,
+      "hydra_answer": "January 1, 2021 - Traveling to Miami, New Year's Trip: On January 1, 2021, Harnoor and Katie traveled to Miami together to ring in the New Year. This  | December 23, 2020 - Harnoor's Birthday Celebration: Katie surprised Harnoor with a birthday celebration on December 23, 2020. This was their first bir | January 1, 2022 - New Year's in Miami, South Beach: Harnoor and Katie rang in the New Year of 2022 on South Beach in Miami. They took a selfie on Ocea",
+      "hydra_latency_ms": 627,
       "hydra_chunks": 5,
       "hydra_error": "",
-      "why_matters": "Must identify a repeated event across two different years"
+      "hydra_recall_at_5": 1.0,
+      "hydra_mrr": 1.0,
+      "winner": "tie",
+      "why_matters": "Must identify a repeated event across two different years",
+      "gold_keywords": [
+        [
+          "January 1, 2021",
+          "Miami"
+        ],
+        [
+          "January 1, 2022",
+          "Miami"
+        ]
+      ]
     },
     {
       "category": "Temporal Reasoning",
@@ -119,14 +207,25 @@
       "question": "When was Harnoor and Katie's first trip outside of Florida?",
       "expected": "July 3, 2021 \u2014 Princeton University visit in New Jersey",
       "chroma_answer": "January 1, 2021 - Traveling to Miami, New Year's Trip: On January 1, 2021, Harnoor and Katie traveled to Miami together to ring in the New Year. This  | April 19, 2021 - Revisiting the Place of Their First Date: On April 19, 2021, Harnoor and Katie went back to the location of their very first date. Th | October 18, 2020 - Meeting for the Second Time: Harnoor and Katie met for the second time on October 18, 2020. They had first connected earlier that m",
-      "chroma_latency_ms": 44.4,
+      "chroma_latency_ms": 47.5,
       "chroma_chunks": 5,
       "chroma_error": "",
-      "hydra_answer": "July 3, 2021 - Visiting Princeton University: On July 3, 2021, Harnoor and Katie visited Princeton University in New Jersey. They took a selfie on the | January 1, 2021 \u2014 Harnoor and Katie traveled to Miami for New Year's. First trip as a couple. Only 2.5 months into dating. | Harnoor and Katie met for the second time on October 18, 2020. They had first connected earlier that month through mutual friends at Florida State Uni",
-      "hydra_latency_ms": 517,
+      "chroma_recall_at_5": 1.0,
+      "chroma_mrr": 0.2,
+      "hydra_answer": "November 2, 2020 - First Car Date: On November 2, 2020, Harnoor and Katie went on their first car date. Katie was driving, and Harnoor sat in the pass | January 1, 2021 - Traveling to Miami, New Year's Trip: On January 1, 2021, Harnoor and Katie traveled to Miami together to ring in the New Year. This  | October 18, 2020 - Meeting for the Second Time: Harnoor and Katie met for the second time on October 18, 2020. They had first connected earlier that m",
+      "hydra_latency_ms": 736,
       "hydra_chunks": 5,
       "hydra_error": "",
-      "why_matters": "Must distinguish Florida trips from out-of-state trips"
+      "hydra_recall_at_5": 1.0,
+      "hydra_mrr": 0.25,
+      "winner": "hydra",
+      "why_matters": "Must distinguish Florida trips from out-of-state trips",
+      "gold_keywords": [
+        [
+          "Princeton",
+          "New Jersey"
+        ]
+      ]
     },
     {
       "category": "Semantic Understanding",
@@ -134,14 +233,25 @@
       "question": "What was the significance of Harnoor and Katie attending a wedding together?",
       "expected": "It signaled deeper commitment \u2014 being invited to important life events as a unit",
       "chroma_answer": "August 21, 2021 - Attending Their First American Wedding Together: On August 21, 2021, Harnoor and Katie attended their first American wedding togethe | December 23, 2020 - Harnoor's Birthday Celebration: Katie surprised Harnoor with a birthday celebration on December 23, 2020. This was their first bir | March 16, 2021 - Katie's Birthday: Harnoor celebrated Katie's birthday on March 16, 2021. He got her a beautiful white layered birthday cake that read",
-      "chroma_latency_ms": 45.0,
+      "chroma_latency_ms": 45.1,
       "chroma_chunks": 5,
       "chroma_error": "",
-      "hydra_answer": "August 21, 2021 - Attending Their First American Wedding Together: On August 21, 2021, Harnoor and Katie attended their first American wedding togethe | August 21, 2021 - Attending Their First American Wedding Together: On August 21, 2021, Harnoor and Katie attended their first American wedding togethe | August 21, 2021 \u2014 Harnoor and Katie attended their first American wedding together at a beautiful outdoor venue with rose gardens. Katie wore a navy p",
-      "hydra_latency_ms": 517,
+      "chroma_recall_at_5": 1.0,
+      "chroma_mrr": 1.0,
+      "hydra_answer": "December 23, 2020 - Harnoor's Birthday Celebration: Katie surprised Harnoor with a birthday celebration on December 23, 2020. This was their first bir | August 21, 2021 - Attending Their First American Wedding Together: On August 21, 2021, Harnoor and Katie attended their first American wedding togethe | March 16, 2021 - Katie's Birthday: Harnoor celebrated Katie's birthday on March 16, 2021. He got her a beautiful white layered birthday cake that read",
+      "hydra_latency_ms": 492,
       "hydra_chunks": 5,
       "hydra_error": "",
-      "why_matters": "Must infer emotional/relational meaning, not just recall facts"
+      "hydra_recall_at_5": 1.0,
+      "hydra_mrr": 0.5,
+      "winner": "chroma",
+      "why_matters": "Must infer emotional/relational meaning, not just recall facts",
+      "gold_keywords": [
+        [
+          "wedding",
+          "commitment"
+        ]
+      ]
     },
     {
       "category": "Semantic Understanding",
@@ -149,14 +259,25 @@
       "question": "Why was the Fourth of July celebration special for Harnoor?",
       "expected": "As an international student from India, experiencing this American tradition with Katie was culturally meaningful",
       "chroma_answer": "July 4, 2021 - Fourth of July Fireworks Celebration: Harnoor and Katie celebrated the Fourth of July 2021 together, watching fireworks in a large crow | December 23, 2020 - Harnoor's Birthday Celebration: Katie surprised Harnoor with a birthday celebration on December 23, 2020. This was their first bir | October 15, 2021 - Celebrating Navratri Together: On October 15, 2021, Harnoor and Katie celebrated Navratri together - a major Hindu festival. They b",
-      "chroma_latency_ms": 46.9,
+      "chroma_latency_ms": 48.5,
       "chroma_chunks": 5,
       "chroma_error": "",
-      "hydra_answer": "July 4, 2021 \u2014 Harnoor and Katie celebrated the Fourth of July, watching fireworks in a large crowd. Celebrating America's Independence Day was especi | July 4, 2021 - Fourth of July Fireworks Celebration: Harnoor and Katie celebrated the Fourth of July 2021 together, watching fireworks in a large crow | July 4, 2021 - Fourth of July Fireworks Celebration: Harnoor and Katie celebrated the Fourth of July 2021 together, watching fireworks in a large crow",
-      "hydra_latency_ms": 1271,
+      "chroma_recall_at_5": 1.0,
+      "chroma_mrr": 1.0,
+      "hydra_answer": "July 4, 2021 - Fourth of July Fireworks Celebration: Harnoor and Katie celebrated the Fourth of July 2021 together, watching fireworks in a large crow | July 3, 2021 - Visiting Princeton University: On July 3, 2021, Harnoor and Katie visited Princeton University in New Jersey. They took a selfie on the | August 21, 2021 - Attending Their First American Wedding Together: On August 21, 2021, Harnoor and Katie attended their first American wedding togethe",
+      "hydra_latency_ms": 437,
       "hydra_chunks": 5,
       "hydra_error": "",
-      "why_matters": "Must extract the cultural significance, not just 'they watched fireworks'"
+      "hydra_recall_at_5": 1.0,
+      "hydra_mrr": 1.0,
+      "winner": "tie",
+      "why_matters": "Must extract the cultural significance, not just 'they watched fireworks'",
+      "gold_keywords": [
+        [
+          "Fourth of July",
+          "international student"
+        ]
+      ]
     },
     {
       "category": "Abstention",
@@ -164,14 +285,25 @@
       "question": "When is Harnoor's birthday and how was it celebrated?",
       "expected": "December 23 \u2014 Katie surprised him with a blue gift bag at his apartment",
       "chroma_answer": "December 23, 2020 - Harnoor's Birthday Celebration: Katie surprised Harnoor with a birthday celebration on December 23, 2020. This was their first bir | March 16, 2021 - Katie's Birthday: Harnoor celebrated Katie's birthday on March 16, 2021. He got her a beautiful white layered birthday cake that read | October 15, 2021 - Celebrating Navratri Together: On October 15, 2021, Harnoor and Katie celebrated Navratri together - a major Hindu festival. They b",
-      "chroma_latency_ms": 45.4,
+      "chroma_latency_ms": 48.4,
       "chroma_chunks": 5,
       "chroma_error": "",
-      "hydra_answer": "March 16, 2021 \u2014 Harnoor celebrated Katie's birthday with a white layered cake that read 'Happy Birthday Katie'. They celebrated at what appears to be | March 16, 2021 - Katie's Birthday: Harnoor celebrated Katie's birthday on March 16, 2021. He got her a beautiful white layered birthday cake that read | March 16, 2021 - Katie's Birthday: Harnoor celebrated Katie's birthday on March 16, 2021. He got her a beautiful white layered birthday cake that read",
-      "hydra_latency_ms": 500,
+      "chroma_recall_at_5": 1.0,
+      "chroma_mrr": 1.0,
+      "hydra_answer": "December 23, 2020 - Harnoor's Birthday Celebration: Katie surprised Harnoor with a birthday celebration on December 23, 2020. This was their first bir | February 14, 2021 - First Valentine's Day Dinner: Harnoor and Katie celebrated their first Valentine's Day together on February 14, 2021. They went to | March 16, 2021 - Katie's Birthday: Harnoor celebrated Katie's birthday on March 16, 2021. He got her a beautiful white layered birthday cake that read",
+      "hydra_latency_ms": 445,
       "hydra_chunks": 5,
       "hydra_error": "",
-      "why_matters": "Must NOT confuse Harnoor's birthday with Katie's birthday"
+      "hydra_recall_at_5": 1.0,
+      "hydra_mrr": 1.0,
+      "winner": "tie",
+      "why_matters": "Must NOT confuse Harnoor's birthday with Katie's birthday",
+      "gold_keywords": [
+        [
+          "December 23",
+          "Harnoor's Birthday"
+        ]
+      ]
     },
     {
       "category": "Abstention",
@@ -179,14 +311,24 @@
       "question": "Are Harnoor and Katie engaged or married?",
       "expected": "Unknown / not mentioned \u2014 buying a car is the biggest commitment mentioned",
       "chroma_answer": "August 21, 2021 - Attending Their First American Wedding Together: On August 21, 2021, Harnoor and Katie attended their first American wedding togethe | December 23, 2020 - Harnoor's Birthday Celebration: Katie surprised Harnoor with a birthday celebration on December 23, 2020. This was their first bir | October 18, 2020 - Meeting for the Second Time: Harnoor and Katie met for the second time on October 18, 2020. They had first connected earlier that m",
-      "chroma_latency_ms": 47.4,
+      "chroma_latency_ms": 47.3,
       "chroma_chunks": 5,
       "chroma_error": "",
-      "hydra_answer": "Harnoor and Katie met for the second time on October 18, 2020. They had first connected earlier that month through mutual friends at Florida State Uni | On October 15, 2021, Harnoor and Katie celebrated Navratri together. They both dressed in traditional Indian attire and held dandiya sticks for the Ga | March 16, 2021 \u2014 Harnoor celebrated Katie's birthday with a white layered cake that read 'Happy Birthday Katie'. They celebrated at what appears to be",
-      "hydra_latency_ms": 568,
+      "chroma_recall_at_5": 0.0,
+      "chroma_mrr": 0.0,
+      "hydra_answer": "December 23, 2020 - Harnoor's Birthday Celebration: Katie surprised Harnoor with a birthday celebration on December 23, 2020. This was their first bir | February 14, 2021 - First Valentine's Day Dinner: Harnoor and Katie celebrated their first Valentine's Day together on February 14, 2021. They went to | March 16, 2021 - Katie's Birthday: Harnoor celebrated Katie's birthday on March 16, 2021. He got her a beautiful white layered birthday cake that read",
+      "hydra_latency_ms": 934,
       "hydra_chunks": 5,
       "hydra_error": "",
-      "why_matters": "Should NOT infer engagement/marriage from buying a car together"
+      "hydra_recall_at_5": 0.0,
+      "hydra_mrr": 0.0,
+      "winner": "tie",
+      "why_matters": "Should NOT infer engagement/marriage from buying a car together",
+      "gold_keywords": [
+        [
+          "chronicles the relationship journey"
+        ]
+      ]
     },
     {
       "category": "Negation",
@@ -194,14 +336,39 @@
       "question": "What did Harnoor and Katie celebrate together that was NOT a birthday?",
       "expected": "Navratri, July 4th, Valentine's Day, Thanksgiving, Christmas, New Year's, wedding",
       "chroma_answer": "March 16, 2021 - Katie's Birthday: Harnoor celebrated Katie's birthday on March 16, 2021. He got her a beautiful white layered birthday cake that read | December 23, 2020 - Harnoor's Birthday Celebration: Katie surprised Harnoor with a birthday celebration on December 23, 2020. This was their first bir | December 25, 2021 - Christmas Together: Harnoor and Katie celebrated Christmas together on December 25, 2021. They posed by a decorated Christmas tree",
-      "chroma_latency_ms": 45.5,
+      "chroma_latency_ms": 48.8,
       "chroma_chunks": 5,
       "chroma_error": "",
-      "hydra_answer": "March 16, 2021 \u2014 Harnoor celebrated Katie's birthday with a white layered cake that read 'Happy Birthday Katie'. They celebrated at what appears to be | March 16, 2021 - Katie's Birthday: Harnoor celebrated Katie's birthday on March 16, 2021. He got her a beautiful white layered birthday cake that read | March 16, 2021 - Katie's Birthday: Harnoor celebrated Katie's birthday on March 16, 2021. He got her a beautiful white layered birthday cake that read",
-      "hydra_latency_ms": 522,
+      "chroma_recall_at_5": 0.5,
+      "chroma_mrr": 0.3333,
+      "hydra_answer": "December 23, 2020 - Harnoor's Birthday Celebration: Katie surprised Harnoor with a birthday celebration on December 23, 2020. This was their first bir | March 16, 2021 - Katie's Birthday: Harnoor celebrated Katie's birthday on March 16, 2021. He got her a beautiful white layered birthday cake that read | October 15, 2021 - Celebrating Navratri Together: On October 15, 2021, Harnoor and Katie celebrated Navratri together - a major Hindu festival. They b",
+      "hydra_latency_ms": 556,
       "hydra_chunks": 5,
       "hydra_error": "",
-      "why_matters": "Vector search returns birthday chunks FIRST because 'birthday' is in the query \u2014 cosine similarity can't negate"
+      "hydra_recall_at_5": 0.5,
+      "hydra_mrr": 0.3333,
+      "winner": "tie",
+      "why_matters": "Vector search returns birthday chunks FIRST because 'birthday' is in the query \u2014 cosine similarity can't negate",
+      "gold_keywords": [
+        [
+          "Navratri"
+        ],
+        [
+          "Fourth of July"
+        ],
+        [
+          "Valentine"
+        ],
+        [
+          "Thanksgiving"
+        ],
+        [
+          "Christmas Together"
+        ],
+        [
+          "wedding"
+        ]
+      ]
     },
     {
       "category": "Negation",
@@ -209,14 +376,29 @@
       "question": "What trips did Harnoor and Katie take that were NOT in Florida?",
       "expected": "Princeton/NJ (July 2021), India (March 2022)",
       "chroma_answer": "January 1, 2021 - Traveling to Miami, New Year's Trip: On January 1, 2021, Harnoor and Katie traveled to Miami together to ring in the New Year. This  | April 19, 2021 - Revisiting the Place of Their First Date: On April 19, 2021, Harnoor and Katie went back to the location of their very first date. Th | January 1, 2022 - New Year's in Miami, South Beach: Harnoor and Katie rang in the New Year of 2022 on South Beach in Miami. They took a selfie on Ocea",
-      "chroma_latency_ms": 45.3,
+      "chroma_latency_ms": 47.0,
       "chroma_chunks": 5,
       "chroma_error": "",
-      "hydra_answer": "Harnoor and Katie met for the second time on October 18, 2020. They had first connected earlier that month through mutual friends at Florida State Uni | January 1, 2021 \u2014 Harnoor and Katie traveled to Miami for New Year's. First trip as a couple. Only 2.5 months into dating. | July 3, 2021 - Visiting Princeton University: On July 3, 2021, Harnoor and Katie visited Princeton University in New Jersey. They took a selfie on the",
-      "hydra_latency_ms": 552,
+      "chroma_recall_at_5": 0.5,
+      "chroma_mrr": 0.2,
+      "hydra_answer": "January 1, 2021 - Traveling to Miami, New Year's Trip: On January 1, 2021, Harnoor and Katie traveled to Miami together to ring in the New Year. This  | April 19, 2021 - Revisiting the Place of Their First Date: On April 19, 2021, Harnoor and Katie went back to the location of their very first date. Th | July 3, 2021 - Visiting Princeton University: On July 3, 2021, Harnoor and Katie visited Princeton University in New Jersey. They took a selfie on the",
+      "hydra_latency_ms": 483,
       "hydra_chunks": 5,
       "hydra_error": "",
-      "why_matters": "Vector returns Miami and FSU trips (highest similarity to 'trip') even though they're IN Florida"
+      "hydra_recall_at_5": 0.5,
+      "hydra_mrr": 0.3333,
+      "winner": "hydra",
+      "why_matters": "Vector returns Miami and FSU trips (highest similarity to 'trip') even though they're IN Florida",
+      "gold_keywords": [
+        [
+          "Princeton",
+          "New Jersey"
+        ],
+        [
+          "Taj Mahal",
+          "India"
+        ]
+      ]
     },
     {
       "category": "Temporal Adjacency",
@@ -224,14 +406,25 @@
       "question": "What did Harnoor and Katie do the day after visiting Princeton?",
       "expected": "July 4th fireworks celebration \u2014 they watched fireworks in a large crowd",
       "chroma_answer": "July 3, 2021 - Visiting Princeton University: On July 3, 2021, Harnoor and Katie visited Princeton University in New Jersey. They took a selfie on the | October 18, 2020 - Meeting for the Second Time: Harnoor and Katie met for the second time on October 18, 2020. They had first connected earlier that m | January 1, 2021 - Traveling to Miami, New Year's Trip: On January 1, 2021, Harnoor and Katie traveled to Miami together to ring in the New Year. This ",
-      "chroma_latency_ms": 44.5,
+      "chroma_latency_ms": 45.2,
       "chroma_chunks": 5,
       "chroma_error": "",
-      "hydra_answer": "July 3, 2021 - Visiting Princeton University: On July 3, 2021, Harnoor and Katie visited Princeton University in New Jersey. They took a selfie on the | July 3, 2021 - Visiting Princeton University: On July 3, 2021, Harnoor and Katie visited Princeton University in New Jersey. They took a selfie on the | July 4, 2021 - Fourth of July Fireworks Celebration: Harnoor and Katie celebrated the Fourth of July 2021 together, watching fireworks in a large crow",
-      "hydra_latency_ms": 507,
+      "chroma_recall_at_5": 0.0,
+      "chroma_mrr": 0.0,
+      "hydra_answer": "October 18, 2020 - Meeting for the Second Time: Harnoor and Katie met for the second time on October 18, 2020. They had first connected earlier that m | July 3, 2021 - Visiting Princeton University: On July 3, 2021, Harnoor and Katie visited Princeton University in New Jersey. They took a selfie on the | July 4, 2021 - Fourth of July Fireworks Celebration: Harnoor and Katie celebrated the Fourth of July 2021 together, watching fireworks in a large crow",
+      "hydra_latency_ms": 544,
       "hydra_chunks": 5,
       "hydra_error": "",
-      "why_matters": "Vector search has no concept of 'the day after' \u2014 returns Princeton chunk or random travel chunks"
+      "hydra_recall_at_5": 1.0,
+      "hydra_mrr": 0.3333,
+      "winner": "hydra",
+      "why_matters": "Vector search has no concept of 'the day after' \u2014 returns Princeton chunk or random travel chunks",
+      "gold_keywords": [
+        [
+          "Fourth of July",
+          "fireworks"
+        ]
+      ]
     },
     {
       "category": "Temporal Adjacency",
@@ -239,14 +432,30 @@
       "question": "Put these events in chronological order: buying a car, visiting India, attending a wedding",
       "expected": "Wedding (Aug 2021) \u2192 India (March 2022) \u2192 Tesla (May 2022)",
       "chroma_answer": "This document chronicles the relationship journey of Harnoor Singh and Katie, from their second meeting in October 2020 through buying a car together  | March 3, 2022 - Packing for India Trip: On March 3, 2022, Harnoor and Katie packed their suitcases for a trip to India. They posed in their apartment  | March 2022 - Visiting the Taj Mahal in India: During their India trip in March 2022, Harnoor and Katie visited the Taj Mahal in Agra. Katie wore a bea",
-      "chroma_latency_ms": 46.2,
+      "chroma_latency_ms": 47.1,
       "chroma_chunks": 5,
       "chroma_error": "",
-      "hydra_answer": "This document chronicles the relationship journey of Harnoor Singh and Katie, from their second meeting in October 2020 through buying a car together  | This document chronicles the relationship journey of Harnoor Singh and Katie, from their second meeting in October 2020 through buying a car together  | This document chronicles the relationship journey of Harnoor Singh and Katie, from their second meeting in October 2020 through buying a car together ",
-      "hydra_latency_ms": 514,
+      "chroma_recall_at_5": 0.6667,
+      "chroma_mrr": 0.3333,
+      "hydra_answer": "November 2, 2020 - First Car Date: On November 2, 2020, Harnoor and Katie went on their first car date. Katie was driving, and Harnoor sat in the pass | May 7, 2022 - Buying a Car Together, Tesla Model 3: On May 7, 2022, Harnoor and Katie bought a car together - a white Tesla Model 3. They posed at the | August 21, 2021 - Attending Their First American Wedding Together: On August 21, 2021, Harnoor and Katie attended their first American wedding togethe",
+      "hydra_latency_ms": 499,
       "hydra_chunks": 5,
       "hydra_error": "",
-      "why_matters": "Vector returns chunks in SIMILARITY order, not chronological \u2014 embeddings have no clock"
+      "hydra_recall_at_5": 1.0,
+      "hydra_mrr": 0.5,
+      "winner": "hydra",
+      "why_matters": "Vector returns chunks in SIMILARITY order, not chronological \u2014 embeddings have no clock",
+      "gold_keywords": [
+        [
+          "wedding"
+        ],
+        [
+          "Taj Mahal"
+        ],
+        [
+          "Tesla"
+        ]
+      ]
     },
     {
       "category": "Entity Direction",
@@ -254,14 +463,25 @@
       "question": "What did Katie specifically do for Harnoor's birthday?",
       "expected": "Surprised him with a large blue 'Happy Birthday' gift bag at his apartment on December 23, 2020",
       "chroma_answer": "March 16, 2021 - Katie's Birthday: Harnoor celebrated Katie's birthday on March 16, 2021. He got her a beautiful white layered birthday cake that read | December 23, 2020 - Harnoor's Birthday Celebration: Katie surprised Harnoor with a birthday celebration on December 23, 2020. This was their first bir | January 1, 2021 - Traveling to Miami, New Year's Trip: On January 1, 2021, Harnoor and Katie traveled to Miami together to ring in the New Year. This ",
-      "chroma_latency_ms": 45.0,
+      "chroma_latency_ms": 46.1,
       "chroma_chunks": 5,
       "chroma_error": "",
-      "hydra_answer": "March 16, 2021 \u2014 Harnoor celebrated Katie's birthday with a white layered cake that read 'Happy Birthday Katie'. They celebrated at what appears to be | March 16, 2021 - Katie's Birthday: Harnoor celebrated Katie's birthday on March 16, 2021. He got her a beautiful white layered birthday cake that read | March 16, 2021 - Katie's Birthday: Harnoor celebrated Katie's birthday on March 16, 2021. He got her a beautiful white layered birthday cake that read",
-      "hydra_latency_ms": 479,
+      "chroma_recall_at_5": 1.0,
+      "chroma_mrr": 0.5,
+      "hydra_answer": "December 23, 2020 - Harnoor's Birthday Celebration: Katie surprised Harnoor with a birthday celebration on December 23, 2020. This was their first bir | February 14, 2021 - First Valentine's Day Dinner: Harnoor and Katie celebrated their first Valentine's Day together on February 14, 2021. They went to | March 16, 2021 - Katie's Birthday: Harnoor celebrated Katie's birthday on March 16, 2021. He got her a beautiful white layered birthday cake that read",
+      "hydra_latency_ms": 448,
       "hydra_chunks": 5,
       "hydra_error": "",
-      "why_matters": "Vector returns both birthday chunks equally \u2014 can't distinguish Katie\u2192Harnoor from Harnoor\u2192Katie direction"
+      "hydra_recall_at_5": 1.0,
+      "hydra_mrr": 1.0,
+      "winner": "hydra",
+      "why_matters": "Vector returns both birthday chunks equally \u2014 can't distinguish Katie\u2192Harnoor from Harnoor\u2192Katie direction",
+      "gold_keywords": [
+        [
+          "December 23",
+          "Katie surprised"
+        ]
+      ]
     },
     {
       "category": "Entity Direction",
@@ -269,14 +489,29 @@
       "question": "Which of Harnoor's Indian traditions did Katie participate in?",
       "expected": "Navratri (wore lehenga, danced Garba), wore Indian clothing at Taj Mahal",
       "chroma_answer": "October 15, 2021 - Celebrating Navratri Together: On October 15, 2021, Harnoor and Katie celebrated Navratri together - a major Hindu festival. They b | December 25, 2021 - Christmas Together: Harnoor and Katie celebrated Christmas together on December 25, 2021. They posed by a decorated Christmas tree | March 3, 2022 - Packing for India Trip: On March 3, 2022, Harnoor and Katie packed their suitcases for a trip to India. They posed in their apartment ",
-      "chroma_latency_ms": 44.8,
+      "chroma_latency_ms": 47.3,
       "chroma_chunks": 5,
       "chroma_error": "",
-      "hydra_answer": "October 15, 2021 - Celebrating Navratri Together: On October 15, 2021, Harnoor and Katie celebrated Navratri together - a major Hindu festival. They b | October 15, 2021 - Celebrating Navratri Together: On October 15, 2021, Harnoor and Katie celebrated Navratri together - a major Hindu festival. They b | March 2022 \u2014 They visited the Taj Mahal. Katie wore a turquoise traditional Indian salwar kameez. They also met Harnoor's family who warmly welcomed K",
-      "hydra_latency_ms": 954,
+      "chroma_recall_at_5": 1.0,
+      "chroma_mrr": 1.0,
+      "hydra_answer": "October 15, 2021 - Celebrating Navratri Together: On October 15, 2021, Harnoor and Katie celebrated Navratri together - a major Hindu festival. They b | March 2022 - Visiting the Taj Mahal in India: During their India trip in March 2022, Harnoor and Katie visited the Taj Mahal in Agra. Katie wore a bea | March 16, 2021 - Katie's Birthday: Harnoor celebrated Katie's birthday on March 16, 2021. He got her a beautiful white layered birthday cake that read",
+      "hydra_latency_ms": 508,
       "hydra_chunks": 5,
       "hydra_error": "",
-      "why_matters": "Vector also returns Thanksgiving/Christmas (Harnoor adopting Katie's traditions) \u2014 can't filter by direction"
+      "hydra_recall_at_5": 1.0,
+      "hydra_mrr": 1.0,
+      "winner": "tie",
+      "why_matters": "Vector also returns Thanksgiving/Christmas (Harnoor adopting Katie's traditions) \u2014 can't filter by direction",
+      "gold_keywords": [
+        [
+          "Navratri",
+          "lehenga"
+        ],
+        [
+          "Taj Mahal",
+          "Indian"
+        ]
+      ]
     },
     {
       "category": "Geographic Filtering",
@@ -284,14 +519,25 @@
       "question": "Which events happened outside of the United States?",
       "expected": "Only the India trip \u2014 visiting the Taj Mahal in March 2022",
       "chroma_answer": "July 4, 2021 - Fourth of July Fireworks Celebration: Harnoor and Katie celebrated the Fourth of July 2021 together, watching fireworks in a large crow | March 3, 2022 - Packing for India Trip: On March 3, 2022, Harnoor and Katie packed their suitcases for a trip to India. They posed in their apartment  | August 21, 2021 - Attending Their First American Wedding Together: On August 21, 2021, Harnoor and Katie attended their first American wedding togethe",
-      "chroma_latency_ms": 44.5,
+      "chroma_latency_ms": 46.2,
       "chroma_chunks": 5,
       "chroma_error": "",
-      "hydra_answer": "Just moved to London! Transferred to the London office. | Just moved to London! Transferred to the London office. | Just moved to London! Transferred to the London office.",
-      "hydra_latency_ms": 532,
+      "chroma_recall_at_5": 0.0,
+      "chroma_mrr": 0.0,
+      "hydra_answer": "January 1, 2021 - Traveling to Miami, New Year's Trip: On January 1, 2021, Harnoor and Katie traveled to Miami together to ring in the New Year. This  | August 21, 2021 - Attending Their First American Wedding Together: On August 21, 2021, Harnoor and Katie attended their first American wedding togethe | July 3, 2021 - Visiting Princeton University: On July 3, 2021, Harnoor and Katie visited Princeton University in New Jersey. They took a selfie on the",
+      "hydra_latency_ms": 507,
       "hydra_chunks": 5,
       "hydra_error": "",
-      "why_matters": "Vector returns any travel chunk (Miami, Princeton, India all score similarly on 'events outside') \u2014 no geographic entity awareness"
+      "hydra_recall_at_5": 0.0,
+      "hydra_mrr": 0.0,
+      "winner": "tie",
+      "why_matters": "Vector returns any travel chunk (Miami, Princeton, India all score similarly on 'events outside') \u2014 no geographic entity awareness",
+      "gold_keywords": [
+        [
+          "Taj Mahal",
+          "India"
+        ]
+      ]
     },
     {
       "category": "Aggregation",
@@ -299,31 +545,70 @@
       "question": "List every holiday or celebration Harnoor and Katie shared together",
       "expected": "Harnoor's birthday, Katie's birthday, NYE 2021, NYE 2022, Valentine's Day, Navratri, July 4th, Thanksgiving, Christmas, wedding attendance",
       "chroma_answer": "December 25, 2021 - Christmas Together: Harnoor and Katie celebrated Christmas together on December 25, 2021. They posed by a decorated Christmas tree | November 25, 2021 - Thanksgiving with Katie's Family: Harnoor spent Thanksgiving with Katie's family on November 25, 2021. They sat around a dining ta | March 16, 2021 - Katie's Birthday: Harnoor celebrated Katie's birthday on March 16, 2021. He got her a beautiful white layered birthday cake that read",
-      "chroma_latency_ms": 46.5,
+      "chroma_latency_ms": 44.9,
       "chroma_chunks": 5,
       "chroma_error": "",
-      "hydra_answer": "This document chronicles the relationship journey of Harnoor Singh and Katie, from their second meeting in October 2020 through buying a car together  | This document chronicles the relationship journey of Harnoor Singh and Katie, from their second meeting in October 2020 through buying a car together  | This document chronicles the relationship journey of Harnoor Singh and Katie, from their second meeting in October 2020 through buying a car together ",
-      "hydra_latency_ms": 499,
+      "chroma_recall_at_5": 0.6,
+      "chroma_mrr": 1.0,
+      "hydra_answer": "December 23, 2020 - Harnoor's Birthday Celebration: Katie surprised Harnoor with a birthday celebration on December 23, 2020. This was their first bir | December 25, 2021 - Christmas Together: Harnoor and Katie celebrated Christmas together on December 25, 2021. They posed by a decorated Christmas tree | March 16, 2021 - Katie's Birthday: Harnoor celebrated Katie's birthday on March 16, 2021. He got her a beautiful white layered birthday cake that read",
+      "hydra_latency_ms": 513,
       "hydra_chunks": 5,
       "hydra_error": "",
-      "why_matters": "Vector top-5 retrieval returns ~5 most 'celebration-like' chunks and misses the rest \u2014 can't aggregate across all 19 memories"
+      "hydra_recall_at_5": 0.5,
+      "hydra_mrr": 1.0,
+      "winner": "chroma",
+      "why_matters": "Vector top-5 retrieval returns ~5 most 'celebration-like' chunks and misses the rest \u2014 can't aggregate across all 19 memories",
+      "gold_keywords": [
+        [
+          "Harnoor's Birthday"
+        ],
+        [
+          "Katie's Birthday"
+        ],
+        [
+          "Miami",
+          "2021"
+        ],
+        [
+          "Miami",
+          "2022"
+        ],
+        [
+          "Valentine"
+        ],
+        [
+          "Navratri"
+        ],
+        [
+          "Fourth of July"
+        ],
+        [
+          "Thanksgiving"
+        ],
+        [
+          "Christmas Together"
+        ],
+        [
+          "wedding"
+        ]
+      ]
     }
   ],
   "data": {
     "total_chunks_ingested": 19,
     "test_cases": 19,
     "categories": [
-      "Semantic Understanding",
+      "Abstention",
+      "Entity Direction",
       "Temporal Adjacency",
+      "Negation",
+      "Aggregation",
       "Geographic Filtering",
       "Multi-Session Reasoning",
-      "Negation",
-      "Entity Direction",
       "Information Extraction",
       "Temporal Reasoning",
-      "Aggregation",
-      "Abstention"
+      "Semantic Understanding"
     ]
   },
-  "timestamp": "2026-03-26 16:11:36"
+  "timestamp": "2026-03-26 18:38:28"
 }
