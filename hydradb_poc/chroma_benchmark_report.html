@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HydraDB vs Traditional Vector DB — Why Vector DBs Are Broken</title>
+<title>HydraDB vs Traditional Vector DB &mdash; LLM-as-Judge Benchmark</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
@@ -29,91 +29,53 @@
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Inter', -apple-system, sans-serif;
-    line-height: 1.6;
-    padding: 0;
-  }
-
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', -apple-system, sans-serif; line-height: 1.6; }
   .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
 
   .hero {
-    text-align: center;
-    padding: 64px 24px 48px;
+    text-align: center; padding: 64px 24px 48px;
     background: linear-gradient(180deg, rgba(129,140,248,0.06) 0%, transparent 100%);
     border-bottom: 1px solid var(--border);
   }
-  .hero .subtitle {
-    font-size: 0.85rem; font-weight: 600; letter-spacing: 0.15em;
-    text-transform: uppercase; color: var(--red); margin-bottom: 16px;
-  }
-  .hero h1 {
-    font-size: 2.8rem; font-weight: 900; letter-spacing: -0.03em;
-    line-height: 1.15; margin-bottom: 12px;
-  }
+  .hero .subtitle { font-size: 0.85rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--hydra); margin-bottom: 16px; }
+  .hero h1 { font-size: 2.8rem; font-weight: 900; letter-spacing: -0.03em; line-height: 1.15; margin-bottom: 12px; }
   .hero h1 .hydra { color: var(--hydra); }
   .hero h1 .vectordb { color: var(--vectordb); }
   .hero h1 .vs { color: var(--text-muted); font-weight: 400; font-size: 2rem; }
-  .hero .tagline {
-    font-size: 1.1rem; color: var(--text-muted); max-width: 700px; margin: 0 auto 24px;
-  }
-  .hero .date {
-    font-size: 0.8rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;
-  }
-  .hero .config-note {
-    font-size: 0.82rem; color: var(--green); margin-top: 12px;
-    padding: 8px 16px; background: var(--green-bg); border-radius: 8px; display: inline-block;
-  }
+  .hero .tagline { font-size: 1.1rem; color: var(--text-muted); max-width: 700px; margin: 0 auto 24px; }
+  .hero .date { font-size: 0.8rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+  .hero .config-note { font-size: 0.82rem; color: var(--green); margin-top: 12px; padding: 8px 16px; background: var(--green-bg); border-radius: 8px; display: inline-block; }
 
-  .scoreboard {
-    display: flex; justify-content: center; gap: 48px; padding: 48px 24px; flex-wrap: wrap;
-  }
-  .score-card {
-    text-align: center; padding: 32px 48px; border-radius: 16px;
-    border: 1px solid var(--border); background: var(--surface); min-width: 200px;
-  }
+  .scoreboard { display: flex; justify-content: center; gap: 32px; padding: 48px 24px; flex-wrap: wrap; }
+  .score-card { text-align: center; padding: 32px 40px; border-radius: 16px; border: 1px solid var(--border); background: var(--surface); min-width: 180px; }
   .score-card.hydra { border-color: var(--hydra-border); background: var(--hydra-bg); }
   .score-card.vectordb { border-color: var(--vectordb-border); background: var(--vectordb-bg); }
-  .score-card .label {
-    font-size: 0.8rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px;
-  }
+  .score-card .label { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
   .score-card.hydra .label { color: var(--hydra); }
   .score-card.vectordb .label { color: var(--vectordb); }
-  .score-card .number { font-size: 4rem; font-weight: 900; line-height: 1; }
+  .score-card .number { font-size: 3.5rem; font-weight: 900; line-height: 1; }
   .score-card.hydra .number { color: var(--hydra); }
   .score-card.vectordb .number { color: var(--vectordb); }
-  .score-card .desc { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
-  .score-card.tie { border-color: rgba(136,136,160,0.3); }
-  .score-card.tie .label { color: var(--text-muted); }
-  .score-card.tie .number { color: var(--text-muted); }
+  .score-card .desc { font-size: 0.82rem; color: var(--text-muted); margin-top: 4px; }
+  .score-card.tie { border-color: rgba(34,197,94,0.3); }
+  .score-card.tie .label { color: var(--green); }
+  .score-card.tie .number { color: var(--green); }
   .score-card.fail { border-color: rgba(239,68,68,0.3); background: var(--red-bg); }
   .score-card.fail .label { color: var(--red); }
   .score-card.fail .number { color: var(--red); }
 
-  .section-header {
-    padding: 48px 0 24px; border-bottom: 1px solid var(--border); margin-bottom: 24px;
-  }
+  .section-header { padding: 48px 0 24px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
   .section-header h2 { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; }
   .section-header p { color: var(--text-muted); font-size: 0.9rem; margin-top: 4px; }
 
-  .stats-grid {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 16px; padding: 24px 0;
+  .method-box {
+    background: var(--surface); border: 1px solid var(--hydra-border); border-radius: 12px;
+    padding: 24px; margin: 32px 0;
   }
-  .stat-card {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px;
-  }
-  .stat-card .stat-label {
-    font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em;
-    text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px;
-  }
-  .stat-card .stat-value {
-    font-size: 1.8rem; font-weight: 800; font-family: 'JetBrains Mono', monospace;
-  }
-  .stat-card .stat-detail { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
+  .method-box h3 { color: var(--hydra); font-size: 1rem; margin-bottom: 12px; }
+  .method-box ol { padding-left: 20px; }
+  .method-box li { font-size: 0.85rem; color: var(--text); margin-bottom: 8px; line-height: 1.6; }
+  .method-box .highlight { color: var(--green); font-weight: 600; }
 
   .thesis-box {
     background: linear-gradient(135deg, rgba(239,68,68,0.08), rgba(249,115,22,0.08));
@@ -121,30 +83,16 @@
   }
   .thesis-box h3 { font-size: 1.2rem; font-weight: 800; color: var(--red); margin-bottom: 12px; }
   .thesis-box p { color: var(--text); font-size: 0.95rem; line-height: 1.7; }
-  .thesis-box .failure-modes {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 12px; margin-top: 16px;
-  }
-  .failure-mode {
-    background: rgba(0,0,0,0.3); border-radius: 8px; padding: 12px 16px; border-left: 3px solid var(--red);
-  }
+  .thesis-box .failure-modes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 16px; }
+  .failure-mode { background: rgba(0,0,0,0.3); border-radius: 8px; padding: 12px 16px; border-left: 3px solid var(--red); }
   .failure-mode .fm-title { font-size: 0.85rem; font-weight: 700; color: var(--red); margin-bottom: 2px; }
   .failure-mode .fm-desc { font-size: 0.78rem; color: var(--text-muted); }
 
-  .test-card {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
-    padding: 24px; margin-bottom: 20px; transition: border-color 0.2s;
-  }
+  .test-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 20px; }
   .test-card:hover { border-color: rgba(255,255,255,0.1); }
-  .test-card .card-header {
-    display: flex; justify-content: space-between; align-items: flex-start;
-    margin-bottom: 16px; flex-wrap: wrap; gap: 8px;
-  }
+  .test-card .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
   .test-card .card-header .left { flex: 1; }
-  .test-card .category-badge {
-    font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
-    padding: 3px 10px; border-radius: 6px; display: inline-block; margin-bottom: 6px;
-  }
+  .test-card .category-badge { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 10px; border-radius: 6px; display: inline-block; margin-bottom: 6px; }
   .category-badge.negation { color: var(--red); background: var(--red-bg); }
   .category-badge.temporal { color: #38bdf8; background: rgba(56,189,248,0.1); }
   .category-badge.entity { color: #a78bfa; background: rgba(167,139,250,0.1); }
@@ -155,29 +103,16 @@
   .category-badge.semantic { color: #60a5fa; background: rgba(96,165,250,0.1); }
   .category-badge.abstention { color: #fb923c; background: rgba(251,146,60,0.1); }
 
-  .winner-badge {
-    font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em;
-    padding: 4px 12px; border-radius: 6px; white-space: nowrap;
-  }
+  .winner-badge { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em; padding: 4px 12px; border-radius: 6px; white-space: nowrap; }
   .winner-badge.hydra-wins { color: var(--hydra); background: var(--hydra-bg); border: 1px solid var(--hydra-border); }
   .winner-badge.vectordb-wins { color: var(--vectordb); background: var(--vectordb-bg); border: 1px solid var(--vectordb-border); }
-  .winner-badge.tie { color: var(--text-muted); background: rgba(136,136,160,0.1); border: 1px solid rgba(136,136,160,0.2); }
+  .winner-badge.tie { color: var(--green); background: var(--green-bg); border: 1px solid rgba(34,197,94,0.2); }
   .winner-badge.both-fail { color: var(--red); background: var(--red-bg); border: 1px solid rgba(239,68,68,0.2); }
 
   .test-card .test-name { font-size: 1.05rem; font-weight: 700; }
-  .test-card .question {
-    background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px;
-    padding: 14px 18px; margin-bottom: 12px; font-size: 0.92rem; color: var(--text);
-  }
-  .test-card .question .q-label {
-    font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em;
-    text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;
-  }
-  .test-card .expected {
-    font-size: 0.82rem; color: var(--green); margin-bottom: 16px;
-    padding-left: 12px; border-left: 2px solid rgba(34,197,94,0.3);
-  }
-  .test-card .expected strong { color: var(--green); }
+  .test-card .question { background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; margin-bottom: 12px; font-size: 0.92rem; }
+  .test-card .question .q-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px; }
+  .test-card .expected { font-size: 0.82rem; color: var(--green); margin-bottom: 16px; padding-left: 12px; border-left: 2px solid rgba(34,197,94,0.3); }
 
   .answers-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
   @media (max-width: 768px) { .answers-grid { grid-template-columns: 1fr; } }
@@ -185,86 +120,82 @@
   .answer-box { border-radius: 10px; padding: 14px; border: 1px solid var(--border); }
   .answer-box.hydra { background: var(--hydra-bg); border-color: var(--hydra-border); }
   .answer-box.vectordb { background: var(--vectordb-bg); border-color: var(--vectordb-border); }
-  .answer-box .answer-header {
-    display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
-  }
-  .answer-box .sys-label {
-    font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
-  }
+  .answer-box .answer-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .answer-box .sys-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
   .answer-box.hydra .sys-label { color: var(--hydra); }
   .answer-box.vectordb .sys-label { color: var(--vectordb); }
-  .answer-box .latency {
-    font-size: 0.72rem; font-family: 'JetBrains Mono', monospace; color: var(--text-muted);
-  }
-  .answer-box .answer-text {
-    font-size: 0.8rem; color: var(--text); line-height: 1.5; max-height: 100px; overflow-y: auto;
-  }
+  .answer-box .answer-text { font-size: 0.85rem; color: var(--text); line-height: 1.5; }
 
-  .analysis {
-    font-size: 0.82rem; color: var(--text-muted); line-height: 1.5;
-    padding: 10px 14px; background: var(--surface-2); border-radius: 8px; margin-bottom: 8px;
-  }
-  .analysis strong { color: var(--text); }
-  .why-matters {
-    font-size: 0.78rem; color: var(--text-muted); font-style: italic;
-  }
+  .verdict-yes { font-size: 0.75rem; font-weight: 800; color: var(--green); background: var(--green-bg); padding: 2px 10px; border-radius: 4px; letter-spacing: 0.05em; }
+  .verdict-no { font-size: 0.75rem; font-weight: 800; color: var(--red); background: var(--red-bg); padding: 2px 10px; border-radius: 4px; letter-spacing: 0.05em; }
+
+  .why-matters { font-size: 0.78rem; color: var(--text-muted); font-style: italic; }
   .why-matters strong { color: var(--text-muted); font-style: normal; }
 
-  .config-box {
-    background: var(--surface); border: 1px solid var(--hydra-border); border-radius: 12px;
-    padding: 24px; margin: 32px 0;
-  }
-  .config-box h3 { color: var(--hydra); font-size: 1rem; margin-bottom: 12px; }
-  .config-box ul { padding-left: 20px; }
-  .config-box li { font-size: 0.85rem; color: var(--text); margin-bottom: 6px; }
-  .config-box .config-highlight { color: var(--green); font-weight: 600; }
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; padding: 24px 0; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+  .stat-card .stat-label { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+  .stat-card .stat-value { font-size: 1.8rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+  .stat-card .stat-detail { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
+
+  .divergent-table { width: 100%; border-collapse: collapse; margin: 24px 0; }
+  .divergent-table th { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); padding: 12px 16px; border-bottom: 1px solid var(--border); text-align: left; }
+  .divergent-table td { padding: 14px 16px; border-bottom: 1px solid rgba(42,42,58,0.5); font-size: 0.85rem; }
+  .divergent-table tr:hover { background: rgba(255,255,255,0.02); }
 </style>
 </head>
 <body>
 
 <div class="hero">
-  <div class="subtitle">Benchmark Report</div>
+  <div class="subtitle">LLM-as-Judge Benchmark Report</div>
   <h1><span class="hydra">HydraDB</span> <span class="vs">vs</span> <span class="vectordb">Traditional Vector DB</span></h1>
-  <p class="tagline">Hybrid memory (vector + graph + BM25) vs pure vector DB &mdash; 19 test cases across 10 categories</p>
-  <p class="date">March 26, 2026 &mdash; Clean tenant, infer: true, 19 chunks</p>
-  <div class="config-note">Clean benchmark: deduplicated tenant, all 19 chunks ingested with infer: true</div>
+  <p class="tagline">AI-generated answers from top-5 retrieved chunks, judged by LLM-as-Judge &mdash; 19 test cases across 10 categories</p>
+  <p class="date">March 27, 2026 &mdash; Fresh ingestion, infer: true, 19 chunks</p>
+  <div class="config-note">Clean benchmark: flushed tenant, fresh ingestion with infer: true, LLM-as-Judge evaluation + Head-to-Head Scored Comparison</div>
 </div>
 
 <div class="container">
   <div class="scoreboard">
     <div class="score-card hydra">
       <div class="label">HydraDB</div>
-      <div class="number">7</div>
-      <div class="desc">wins</div>
+      <div class="number">6</div>
+      <div class="desc">satisfactory (6/19)</div>
     </div>
     <div class="score-card vectordb">
       <div class="label">Traditional Vector DB</div>
-      <div class="number">2</div>
-      <div class="desc">wins</div>
+      <div class="number">4</div>
+      <div class="desc">satisfactory (4/19)</div>
     </div>
     <div class="score-card tie">
-      <div class="label">Tie</div>
-      <div class="number">6</div>
-      <div class="desc">both correct</div>
+      <div class="label">Both Pass</div>
+      <div class="number">3</div>
+      <div class="desc">both satisfactory</div>
     </div>
     <div class="score-card fail">
       <div class="label">Both Fail</div>
-      <div class="number">4</div>
-      <div class="desc">neither correct</div>
+      <div class="number">12</div>
+      <div class="desc">neither satisfactory</div>
     </div>
   </div>
 
-  <div class="config-box">
-    <h3>Benchmark Configuration (Clean Run)</h3>
-    <ul>
-      <li><span class="config-highlight">Tenant cleaned:</span> All 114+ duplicate/foreign memories deleted from live_benchmark</li>
-      <li><span class="config-highlight">19 chunks ingested</span> one-by-one with <code>infer: true</code> (entity extraction, graph edges, inferred embeddings)</li>
-      <li><span class="config-highlight">No foreign data:</span> Previous runs had Goldman Sachs, London, steak lover memories contaminating results</li>
-      <li><span class="config-highlight">Real relevancy scores:</span> HydraDB now returns scores (0.9-1.4) vs 0.000 in previous polluted runs</li>
-      <li>HydraDB: cloud API, hybrid vector + graph + BM25 | Traditional Vector DB: local in-memory, pure cosine similarity (standard embeddings)</li>
-      <li>Raw retrieval comparison &mdash; no LLM summarization layer</li>
-    </ul>
+  <div class="method-box">
+    <h3>Evaluation Methodology</h3>
+    <ol>
+      <li><span class="highlight">Retrieve:</span> Top-5 chunks from each system for every test question</li>
+      <li><span class="highlight">Generate:</span> Gemini 2.5 Flash produces a one-sentence answer based ONLY on retrieved context</li>
+      <li><span class="highlight">Judge:</span> Gemini 2.5 Flash strictly evaluates if the AI answer contains key facts from the expected answer &mdash; YES or NO</li>
+    </ol>
   </div>
+
+  <div class="section-header">
+    <h2>Divergent Results</h2>
+    <p>The 4 tests where the two systems produced different verdicts &mdash; HydraDB wins 3, Vector DB wins 1</p>
+  </div>
+
+  <table class="divergent-table">
+    <tr><th>Test</th><th>HydraDB</th><th>Traditional Vector DB</th><th>Winner</th></tr>
+    <tr><td>Relationship milestone inference</td><td><span class="verdict-no">NO</span></td><td><span class="verdict-yes">YES</span></td><td style="color:var(--vectordb);font-weight:700;">Vector DB</td></tr><tr><td>Intercultural significance</td><td><span class="verdict-yes">YES</span></td><td><span class="verdict-no">NO</span></td><td style="color:var(--hydra);font-weight:700;">HydraDB</td></tr><tr><td>Don&#x27;t confuse similar events</td><td><span class="verdict-yes">YES</span></td><td><span class="verdict-no">NO</span></td><td style="color:var(--hydra);font-weight:700;">HydraDB</td></tr><tr><td>Day-after reasoning</td><td><span class="verdict-yes">YES</span></td><td><span class="verdict-no">NO</span></td><td style="color:var(--hydra);font-weight:700;">HydraDB</td></tr>
+  </table>
 
   <div class="thesis-box">
     <h3>The Thesis: Pure Vector Search Has Fundamental Blind Spots</h3>
@@ -272,66 +203,33 @@
       Cosine similarity computes a single number: how close two embeddings are in vector space.
       It has no understanding of negation, time, entity relationships, or geographic structure.
       HydraDB's hybrid approach (vector + knowledge graph + BM25 full-text) addresses several of these gaps.
+      At the AI answer layer, the LLM compensates for some ranking issues &mdash; if the right chunk is anywhere in top-5, the answer can still be correct.
     </p>
     <div class="failure-modes">
-      <div class="failure-mode">
-        <div class="fm-title">Negation Blindness</div>
-        <div class="fm-desc">"NOT a birthday" matches birthday chunks highest</div>
-      </div>
-      <div class="failure-mode">
-        <div class="fm-title">No Temporal Edges</div>
-        <div class="fm-desc">Can't reason about "the day after" or chronological order</div>
-      </div>
-      <div class="failure-mode">
-        <div class="fm-title">No Entity Direction</div>
-        <div class="fm-desc">Can't distinguish Katie&rarr;Harnoor from Harnoor&rarr;Katie</div>
-      </div>
-      <div class="failure-mode">
-        <div class="fm-title">No Geographic Awareness</div>
-        <div class="fm-desc">"Outside the US" returns US-based events</div>
-      </div>
-      <div class="failure-mode">
-        <div class="fm-title">Aggregation Ceiling</div>
-        <div class="fm-desc">Top-k can't scan all chunks for exhaustive lists</div>
-      </div>
-      <div class="failure-mode">
-        <div class="fm-title">Graph Linking</div>
-        <div class="fm-desc">No edges between related events across memories</div>
-      </div>
+      <div class="failure-mode"><div class="fm-title">Negation Blindness</div><div class="fm-desc">"NOT a birthday" matches birthday chunks highest</div></div>
+      <div class="failure-mode"><div class="fm-title">No Temporal Edges</div><div class="fm-desc">Can't reason about "the day after" or chronological order</div></div>
+      <div class="failure-mode"><div class="fm-title">No Entity Direction</div><div class="fm-desc">Can't distinguish Katie&rarr;Harnoor from Harnoor&rarr;Katie</div></div>
+      <div class="failure-mode"><div class="fm-title">No Geographic Awareness</div><div class="fm-desc">"Outside the US" returns US-based events</div></div>
+      <div class="failure-mode"><div class="fm-title">Aggregation Ceiling</div><div class="fm-desc">Top-k can't scan all chunks for exhaustive lists</div></div>
+      <div class="failure-mode"><div class="fm-title">LLM Compensates</div><div class="fm-desc">AI layer masks retrieval differences when correct chunk is in top-5</div></div>
     </div>
   </div>
 
   <div class="section-header">
-    <h2>Latency &amp; System Comparison</h2>
-    <p>Note: Traditional Vector DB runs locally (no network hop). The comparison is about retrieval quality, not speed.</p>
+    <h2>Retrieval Quality (Recall@5 / MRR)</h2>
+    <p>Raw retrieval metrics before the LLM answer layer</p>
   </div>
 
   <div class="stats-grid">
-    <div class="stat-card">
-      <div class="stat-label">HydraDB Avg Latency</div>
-      <div class="stat-value" style="color: var(--hydra)">597ms</div>
-      <div class="stat-detail">Cloud API (hybrid pipeline)</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Traditional Vector DB Avg Latency</div>
-      <div class="stat-value" style="color: var(--vectordb)">46.2ms</div>
-      <div class="stat-detail">Local in-memory</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Test Cases</div>
-      <div class="stat-value">19</div>
-      <div class="stat-detail">Across 10 categories</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Chunks Ingested</div>
-      <div class="stat-value">19</div>
-      <div class="stat-detail">Same data, both systems</div>
-    </div>
+    <div class="stat-card"><div class="stat-label">HydraDB Recall@5</div><div class="stat-value" style="color:var(--hydra)">73.5%</div><div class="stat-detail">Fraction of required info in top 5</div></div>
+    <div class="stat-card"><div class="stat-label">Vector DB Recall@5</div><div class="stat-value" style="color:var(--vectordb)">66.3%</div><div class="stat-detail">Fraction of required info in top 5</div></div>
+    <div class="stat-card"><div class="stat-label">HydraDB MRR</div><div class="stat-value" style="color:var(--hydra)">0.696</div><div class="stat-detail">Mean Reciprocal Rank</div></div>
+    <div class="stat-card"><div class="stat-label">Vector DB MRR</div><div class="stat-value" style="color:var(--vectordb)">0.574</div><div class="stat-detail">Mean Reciprocal Rank</div></div>
   </div>
 
   <div class="section-header">
     <h2>All 19 Test Results</h2>
-    <p>Each card shows the top retrieved chunk from each system, with analysis of why one won.</p>
+    <p>Each card shows the AI-generated answer from each system's retrieved chunks, with Gemini's YES/NO verdict</p>
   </div>
 
   
@@ -341,198 +239,132 @@
           <span class="category-badge extraction">Information Extraction</span>
           <div class="test-name">Specific date recall</div>
         </div>
-        <span class="winner-badge tie">TIE</span>
+        <span class="winner-badge tie">BOTH PASS</span>
       </div>
-      <div class="question">
-        <div class="q-label">Question</div>
-        When did Harnoor and Katie meet for the second time?
-      </div>
+      <div class="question"><div class="q-label">Question</div>When did Harnoor and Katie meet for the second time?</div>
       <div class="expected"><strong>Expected:</strong> October 18, 2020</div>
       <div class="answers-grid">
         <div class="answer-box hydra">
-          <div class="answer-header">
-            <span class="sys-label">HydraDB</span>
-            <span class="latency">1830ms</span>
-          </div>
-          <div class="answer-text">October 18, 2020 - Meeting for the Second Time: Harnoor and Katie met for the second time on October 18, 2020. They had first connected earlier that m</div>
+          <div class="answer-header"><span class="sys-label">HydraDB</span><span class="verdict-yes">YES</span></div>
+          <div class="answer-text">Harnoor and Katie met for the second time on October 18, 2020.</div>
         </div>
         <div class="answer-box vectordb">
-          <div class="answer-header">
-            <span class="sys-label">Traditional Vector DB</span>
-            <span class="latency">51.7ms</span>
-          </div>
-          <div class="answer-text">October 18, 2020 - Meeting for the Second Time: Harnoor and Katie met for the second time on October 18, 2020. They had first connected earlier that m</div>
+          <div class="answer-header"><span class="sys-label">Traditional Vector DB</span><span class="verdict-yes">YES</span></div>
+          <div class="answer-text">Harnoor and Katie met for the second time on October 18, 2020.</div>
         </div>
       </div>
-      <div class="analysis"><strong>Analysis:</strong> Both systems correctly retrieve the October 18, 2020 chunk as their top result. Simple keyword-to-content matching works for both.</div>
       <div class="why-matters"><strong>Why it matters:</strong> Exact date retrieval from a specific memory</div>
     </div>
-
     <div class="test-card">
       <div class="card-header">
         <div class="left">
           <span class="category-badge extraction">Information Extraction</span>
           <div class="test-name">Buried detail in rich context</div>
         </div>
-        <span class="winner-badge vectordb-wins">VECTOR DB WINS</span>
+        <span class="winner-badge tie">BOTH PASS</span>
       </div>
-      <div class="question">
-        <div class="q-label">Question</div>
-        What car did Harnoor and Katie buy together?
-      </div>
+      <div class="question"><div class="q-label">Question</div>What car did Harnoor and Katie buy together?</div>
       <div class="expected"><strong>Expected:</strong> White Tesla Model 3</div>
       <div class="answers-grid">
         <div class="answer-box hydra">
-          <div class="answer-header">
-            <span class="sys-label">HydraDB</span>
-            <span class="latency">583ms</span>
-          </div>
-          <div class="answer-text">November 2, 2020 - First Car Date: On November 2, 2020, Harnoor and Katie went on their first car date. Katie was driving, and Harnoor sat in the pass</div>
+          <div class="answer-header"><span class="sys-label">HydraDB</span><span class="verdict-yes">YES</span></div>
+          <div class="answer-text">Harnoor and Katie bought a white Tesla Model 3 together.</div>
         </div>
         <div class="answer-box vectordb">
-          <div class="answer-header">
-            <span class="sys-label">Traditional Vector DB</span>
-            <span class="latency">43.7ms</span>
-          </div>
-          <div class="answer-text">May 7, 2022 - Buying a Car Together, Tesla Model 3: On May 7, 2022, Harnoor and Katie bought a car together - a white Tesla Model 3. They posed at the</div>
+          <div class="answer-header"><span class="sys-label">Traditional Vector DB</span><span class="verdict-yes">YES</span></div>
+          <div class="answer-text">Harnoor and Katie bought a white Tesla Model 3 together.</div>
         </div>
       </div>
-      <div class="analysis"><strong>Analysis:</strong> Traditional Vector DB ranks the Tesla purchase chunk #1 (correct). HydraDB&#x27;s graph links &#x27;car&#x27; to the earlier car date chunk, ranking it higher than the actual purchase. The entity graph over-associates &#x27;car&#x27; with the first car date.</div>
       <div class="why-matters"><strong>Why it matters:</strong> Specific fact (car model + color) buried in descriptive paragraph</div>
     </div>
-
     <div class="test-card">
       <div class="card-header">
         <div class="left">
           <span class="category-badge extraction">Information Extraction</span>
           <div class="test-name">Cultural detail extraction</div>
         </div>
-        <span class="winner-badge tie">TIE</span>
+        <span class="winner-badge tie">BOTH PASS</span>
       </div>
-      <div class="question">
-        <div class="q-label">Question</div>
-        What did Katie wear for Navratri?
-      </div>
+      <div class="question"><div class="q-label">Question</div>What did Katie wear for Navratri?</div>
       <div class="expected"><strong>Expected:</strong> Red and green lehenga with traditional jewelry</div>
       <div class="answers-grid">
         <div class="answer-box hydra">
-          <div class="answer-header">
-            <span class="sys-label">HydraDB</span>
-            <span class="latency">500ms</span>
-          </div>
-          <div class="answer-text">October 15, 2021 - Celebrating Navratri Together: On October 15, 2021, Harnoor and Katie celebrated Navratri together - a major Hindu festival. They b</div>
+          <div class="answer-header"><span class="sys-label">HydraDB</span><span class="verdict-yes">YES</span></div>
+          <div class="answer-text">Katie wore a beautiful red and green lehenga with traditional jewelry for Navratri.</div>
         </div>
         <div class="answer-box vectordb">
-          <div class="answer-header">
-            <span class="sys-label">Traditional Vector DB</span>
-            <span class="latency">47.3ms</span>
-          </div>
-          <div class="answer-text">October 15, 2021 - Celebrating Navratri Together: On October 15, 2021, Harnoor and Katie celebrated Navratri together - a major Hindu festival. They b</div>
+          <div class="answer-header"><span class="sys-label">Traditional Vector DB</span><span class="verdict-yes">YES</span></div>
+          <div class="answer-text">Katie wore a beautiful red and green lehenga with traditional jewelry for Navratri.</div>
         </div>
       </div>
-      <div class="analysis"><strong>Analysis:</strong> Both correctly retrieve the Navratri chunk first. The keyword &#x27;Navratri&#x27; is distinctive enough for both vector and hybrid search.</div>
       <div class="why-matters"><strong>Why it matters:</strong> Specific clothing detail from a cultural event description</div>
     </div>
-
     <div class="test-card">
       <div class="card-header">
         <div class="left">
           <span class="category-badge reasoning">Multi-Session Reasoning</span>
           <div class="test-name">Synthesize relationship progression</div>
         </div>
-        <span class="winner-badge hydra-wins">HYDRADB WINS</span>
+        <span class="winner-badge both-fail">BOTH FAIL</span>
       </div>
-      <div class="question">
-        <div class="q-label">Question</div>
-        How did Harnoor and Katie&#x27;s relationship progress from casual dating to major commitments?
-      </div>
+      <div class="question"><div class="q-label">Question</div>How did Harnoor and Katie&#x27;s relationship progress from casual dating to major commitments?</div>
       <div class="expected"><strong>Expected:</strong> First car date Nov 2020 → first formal dinner Valentine&#x27;s 2021 → bought a Tesla together May 2022</div>
       <div class="answers-grid">
         <div class="answer-box hydra">
-          <div class="answer-header">
-            <span class="sys-label">HydraDB</span>
-            <span class="latency">537ms</span>
-          </div>
-          <div class="answer-text">This document chronicles the relationship journey of Harnoor Singh and Katie, from their second meeting in October 2020 through buying a car together </div>
+          <div class="answer-header"><span class="sys-label">HydraDB</span><span class="verdict-no">NO</span></div>
+          <div class="answer-text">Not found in memories.</div>
         </div>
         <div class="answer-box vectordb">
-          <div class="answer-header">
-            <span class="sys-label">Traditional Vector DB</span>
-            <span class="latency">44.7ms</span>
-          </div>
-          <div class="answer-text">This document chronicles the relationship journey of Harnoor Singh and Katie, from their second meeting in October 2020 through buying a car together </div>
+          <div class="answer-header"><span class="sys-label">Traditional Vector DB</span><span class="verdict-no">NO</span></div>
+          <div class="answer-text">Not found in memories.</div>
         </div>
       </div>
-      <div class="analysis"><strong>Analysis:</strong> HydraDB includes Valentine&#x27;s Day dinner (formal date milestone) in top 3. Traditional Vector DB returns Miami trip instead — less relevant to &#x27;progression from casual to committed.&#x27; HydraDB&#x27;s graph edges connect relationship milestones.</div>
       <div class="why-matters"><strong>Why it matters:</strong> Requires combining 3+ memories to show relationship arc</div>
     </div>
-
     <div class="test-card">
       <div class="card-header">
         <div class="left">
           <span class="category-badge reasoning">Multi-Session Reasoning</span>
           <div class="test-name">Cross-cultural exchange pattern</div>
         </div>
-        <span class="winner-badge hydra-wins">HYDRADB WINS</span>
+        <span class="winner-badge both-fail">BOTH FAIL</span>
       </div>
-      <div class="question">
-        <div class="q-label">Question</div>
-        How did Harnoor and Katie embrace each other&#x27;s cultures?
-      </div>
+      <div class="question"><div class="q-label">Question</div>How did Harnoor and Katie embrace each other&#x27;s cultures?</div>
       <div class="expected"><strong>Expected:</strong> Katie: Navratri/lehenga/Garba, wore Indian clothing at Taj Mahal. Harnoor: Thanksgiving with Katie&#x27;s family, Christmas together.</div>
       <div class="answers-grid">
         <div class="answer-box hydra">
-          <div class="answer-header">
-            <span class="sys-label">HydraDB</span>
-            <span class="latency">510ms</span>
-          </div>
-          <div class="answer-text">This document chronicles the relationship journey of Harnoor Singh and Katie, from their second meeting in October 2020 through buying a car together </div>
+          <div class="answer-header"><span class="sys-label">HydraDB</span><span class="verdict-no">NO</span></div>
+          <div class="answer-text">Katie embraced Harnoor&#x27;s Indian culture by dressing in traditional attire and dancing Garba for Navratri, while Harnoor embraced Katie&#x27;s American culture by celebrating Christmas with her.</div>
         </div>
         <div class="answer-box vectordb">
-          <div class="answer-header">
-            <span class="sys-label">Traditional Vector DB</span>
-            <span class="latency">45.7ms</span>
-          </div>
-          <div class="answer-text">This document chronicles the relationship journey of Harnoor Singh and Katie, from their second meeting in October 2020 through buying a car together </div>
+          <div class="answer-header"><span class="sys-label">Traditional Vector DB</span><span class="verdict-no">NO</span></div>
+          <div class="answer-text">Katie embraced Harnoor&#x27;s Indian culture by celebrating Navratri in traditional attire, while Harnoor embraced Katie&#x27;s American culture by attending an American wedding and celebrating Christmas.</div>
         </div>
       </div>
-      <div class="analysis"><strong>Analysis:</strong> HydraDB surfaces Navratri, Christmas, AND Taj Mahal — three key cultural exchange moments. Traditional Vector DB returns the wedding chunk instead of Taj Mahal, missing the Indian clothing detail.</div>
       <div class="why-matters"><strong>Why it matters:</strong> Must combine cultural exchange moments across multiple memories</div>
     </div>
-
     <div class="test-card">
       <div class="card-header">
         <div class="left">
           <span class="category-badge temporal">Temporal Reasoning</span>
           <div class="test-name">Timeline ordering — counting repeated events</div>
         </div>
-        <span class="winner-badge tie">TIE</span>
+        <span class="winner-badge both-fail">BOTH FAIL</span>
       </div>
-      <div class="question">
-        <div class="q-label">Question</div>
-        How many times did Harnoor and Katie go to Miami for New Year&#x27;s?
-      </div>
+      <div class="question"><div class="q-label">Question</div>How many times did Harnoor and Katie go to Miami for New Year&#x27;s?</div>
       <div class="expected"><strong>Expected:</strong> Twice — January 2021 and January 2022</div>
       <div class="answers-grid">
         <div class="answer-box hydra">
-          <div class="answer-header">
-            <span class="sys-label">HydraDB</span>
-            <span class="latency">514ms</span>
-          </div>
-          <div class="answer-text">January 1, 2021 - Traveling to Miami, New Year&#x27;s Trip: On January 1, 2021, Harnoor and Katie traveled to Miami together to ring in the New Year. This </div>
+          <div class="answer-header"><span class="sys-label">HydraDB</span><span class="verdict-no">NO</span></div>
+          <div class="answer-text">Harnoor and Katie went to Miami for New Year&#x27;s two times.</div>
         </div>
         <div class="answer-box vectordb">
-          <div class="answer-header">
-            <span class="sys-label">Traditional Vector DB</span>
-            <span class="latency">44.8ms</span>
-          </div>
-          <div class="answer-text">January 1, 2021 - Traveling to Miami, New Year&#x27;s Trip: On January 1, 2021, Harnoor and Katie traveled to Miami together to ring in the New Year. This </div>
+          <div class="answer-header"><span class="sys-label">Traditional Vector DB</span><span class="verdict-no">NO</span></div>
+          <div class="answer-text">Harnoor and Katie went to Miami for New Year&#x27;s two times.</div>
         </div>
       </div>
-      <div class="analysis"><strong>Analysis:</strong> Both retrieve both Miami NYE chunks. The query contains strong keywords (&#x27;Miami&#x27;, &#x27;New Year&#x27;) that work well for both systems.</div>
       <div class="why-matters"><strong>Why it matters:</strong> Must identify a repeated event across two different years</div>
     </div>
-
     <div class="test-card">
       <div class="card-header">
         <div class="left">
@@ -541,31 +373,20 @@
         </div>
         <span class="winner-badge both-fail">BOTH FAIL</span>
       </div>
-      <div class="question">
-        <div class="q-label">Question</div>
-        When was Harnoor and Katie&#x27;s first trip outside of Florida?
-      </div>
+      <div class="question"><div class="q-label">Question</div>When was Harnoor and Katie&#x27;s first trip outside of Florida?</div>
       <div class="expected"><strong>Expected:</strong> July 3, 2021 — Princeton University visit in New Jersey</div>
       <div class="answers-grid">
         <div class="answer-box hydra">
-          <div class="answer-header">
-            <span class="sys-label">HydraDB</span>
-            <span class="latency">617ms</span>
-          </div>
-          <div class="answer-text">November 2, 2020 - First Car Date: On November 2, 2020, Harnoor and Katie went on their first car date. Katie was driving, and Harnoor sat in the pass</div>
+          <div class="answer-header"><span class="sys-label">HydraDB</span><span class="verdict-no">NO</span></div>
+          <div class="answer-text">Harnoor and Katie&#x27;s first trip outside of Florida was on July 3, 2021.</div>
         </div>
         <div class="answer-box vectordb">
-          <div class="answer-header">
-            <span class="sys-label">Traditional Vector DB</span>
-            <span class="latency">44.3ms</span>
-          </div>
-          <div class="answer-text">January 1, 2021 - Traveling to Miami, New Year&#x27;s Trip: On January 1, 2021, Harnoor and Katie traveled to Miami together to ring in the New Year. This </div>
+          <div class="answer-header"><span class="sys-label">Traditional Vector DB</span><span class="verdict-no">NO</span></div>
+          <div class="answer-text">Harnoor and Katie&#x27;s first trip outside of Florida was on July 3, 2021.</div>
         </div>
       </div>
-      <div class="analysis"><strong>Analysis:</strong> Both fail. Neither returns Princeton (New Jersey) as the top result. The word &#x27;first&#x27; triggers early-timeline chunks, and &#x27;Florida&#x27; pulls Florida-based events. Negation + temporal reasoning combined is hard.</div>
       <div class="why-matters"><strong>Why it matters:</strong> Must distinguish Florida trips from out-of-state trips</div>
     </div>
-
     <div class="test-card">
       <div class="card-header">
         <div class="left">
@@ -574,130 +395,86 @@
         </div>
         <span class="winner-badge vectordb-wins">VECTOR DB WINS</span>
       </div>
-      <div class="question">
-        <div class="q-label">Question</div>
-        What was the significance of Harnoor and Katie attending a wedding together?
-      </div>
+      <div class="question"><div class="q-label">Question</div>What was the significance of Harnoor and Katie attending a wedding together?</div>
       <div class="expected"><strong>Expected:</strong> It signaled deeper commitment — being invited to important life events as a unit</div>
       <div class="answers-grid">
         <div class="answer-box hydra">
-          <div class="answer-header">
-            <span class="sys-label">HydraDB</span>
-            <span class="latency">530ms</span>
-          </div>
-          <div class="answer-text">December 23, 2020 - Harnoor&#x27;s Birthday Celebration: Katie surprised Harnoor with a birthday celebration on December 23, 2020. This was their first bir</div>
+          <div class="answer-header"><span class="sys-label">HydraDB</span><span class="verdict-no">NO</span></div>
+          <div class="answer-text">Attending their first American wedding together was a significant cultural milestone for Harnoor and signaled a deeper level of commitment for them as a couple.</div>
         </div>
         <div class="answer-box vectordb">
-          <div class="answer-header">
-            <span class="sys-label">Traditional Vector DB</span>
-            <span class="latency">45.0ms</span>
-          </div>
-          <div class="answer-text">August 21, 2021 - Attending Their First American Wedding Together: On August 21, 2021, Harnoor and Katie attended their first American wedding togethe</div>
+          <div class="answer-header"><span class="sys-label">Traditional Vector DB</span><span class="verdict-yes">YES</span></div>
+          <div class="answer-text">Attending their first American wedding together was a significant cultural milestone for Harnoor and signaled a deeper level of commitment in their relationship as they were invited to important life events as a unit.</div>
         </div>
       </div>
-      <div class="analysis"><strong>Analysis:</strong> Traditional Vector DB returns the wedding chunk first (correct). HydraDB returns the birthday chunk instead — the graph likely links &#x27;milestone&#x27; and &#x27;celebration&#x27; more strongly to birthday events.</div>
       <div class="why-matters"><strong>Why it matters:</strong> Must infer emotional/relational meaning, not just recall facts</div>
     </div>
-
     <div class="test-card">
       <div class="card-header">
         <div class="left">
           <span class="category-badge semantic">Semantic Understanding</span>
           <div class="test-name">Intercultural significance</div>
         </div>
-        <span class="winner-badge tie">TIE</span>
+        <span class="winner-badge hydra-wins">HYDRADB WINS</span>
       </div>
-      <div class="question">
-        <div class="q-label">Question</div>
-        Why was the Fourth of July celebration special for Harnoor?
-      </div>
+      <div class="question"><div class="q-label">Question</div>Why was the Fourth of July celebration special for Harnoor?</div>
       <div class="expected"><strong>Expected:</strong> As an international student from India, experiencing this American tradition with Katie was culturally meaningful</div>
       <div class="answers-grid">
         <div class="answer-box hydra">
-          <div class="answer-header">
-            <span class="sys-label">HydraDB</span>
-            <span class="latency">547ms</span>
-          </div>
-          <div class="answer-text">July 4, 2021 - Fourth of July Fireworks Celebration: Harnoor and Katie celebrated the Fourth of July 2021 together, watching fireworks in a large crow</div>
+          <div class="answer-header"><span class="sys-label">HydraDB</span><span class="verdict-yes">YES</span></div>
+          <div class="answer-text">The Fourth of July celebration was especially meaningful for Harnoor as an international student from India experiencing this American tradition with Katie.</div>
         </div>
         <div class="answer-box vectordb">
-          <div class="answer-header">
-            <span class="sys-label">Traditional Vector DB</span>
-            <span class="latency">44.7ms</span>
-          </div>
-          <div class="answer-text">July 4, 2021 - Fourth of July Fireworks Celebration: Harnoor and Katie celebrated the Fourth of July 2021 together, watching fireworks in a large crow</div>
+          <div class="answer-header"><span class="sys-label">Traditional Vector DB</span><span class="verdict-no">NO</span></div>
+          <div class="answer-text">For Harnoor, an international student from India, it was especially meaningful to experience this American tradition with Katie.</div>
         </div>
       </div>
-      <div class="analysis"><strong>Analysis:</strong> Both correctly retrieve the July 4th chunk. &#x27;Fourth of July&#x27; is a distinctive enough phrase for both systems.</div>
-      <div class="why-matters"><strong>Why it matters:</strong> Must extract the cultural significance, not just &#x27;they watched fireworks&#x27;</div>
+      <div class="why-matters"><strong>Why it matters:</strong> Must extract the cultural significance beyond surface facts</div>
     </div>
-
     <div class="test-card">
       <div class="card-header">
         <div class="left">
           <span class="category-badge abstention">Abstention</span>
           <div class="test-name">Don&#x27;t confuse similar events</div>
         </div>
-        <span class="winner-badge tie">TIE</span>
+        <span class="winner-badge hydra-wins">HYDRADB WINS</span>
       </div>
-      <div class="question">
-        <div class="q-label">Question</div>
-        When is Harnoor&#x27;s birthday and how was it celebrated?
-      </div>
+      <div class="question"><div class="q-label">Question</div>When is Harnoor&#x27;s birthday and how was it celebrated?</div>
       <div class="expected"><strong>Expected:</strong> December 23 — Katie surprised him with a blue gift bag at his apartment</div>
       <div class="answers-grid">
         <div class="answer-box hydra">
-          <div class="answer-header">
-            <span class="sys-label">HydraDB</span>
-            <span class="latency">501ms</span>
-          </div>
-          <div class="answer-text">December 23, 2020 - Harnoor&#x27;s Birthday Celebration: Katie surprised Harnoor with a birthday celebration on December 23, 2020. This was their first bir</div>
+          <div class="answer-header"><span class="sys-label">HydraDB</span><span class="verdict-yes">YES</span></div>
+          <div class="answer-text">Harnoor&#x27;s birthday is on December 23rd, and it was celebrated by Katie surprising him with a large blue &#x27;Happy Birthday&#x27; gift bag at his apartment in Tallahassee.</div>
         </div>
         <div class="answer-box vectordb">
-          <div class="answer-header">
-            <span class="sys-label">Traditional Vector DB</span>
-            <span class="latency">46.5ms</span>
-          </div>
-          <div class="answer-text">December 23, 2020 - Harnoor&#x27;s Birthday Celebration: Katie surprised Harnoor with a birthday celebration on December 23, 2020. This was their first bir</div>
+          <div class="answer-header"><span class="sys-label">Traditional Vector DB</span><span class="verdict-no">NO</span></div>
+          <div class="answer-text">Harnoor&#x27;s birthday is December 23, and it was celebrated when Katie surprised him with a gift bag at his Tallahassee apartment.</div>
         </div>
       </div>
-      <div class="analysis"><strong>Analysis:</strong> Both correctly rank Harnoor&#x27;s birthday (Dec 23) above Katie&#x27;s birthday. The query specifically says &#x27;Harnoor&#x27;s birthday&#x27; which helps both systems.</div>
-      <div class="why-matters"><strong>Why it matters:</strong> Must NOT confuse Harnoor&#x27;s birthday with Katie&#x27;s birthday</div>
+      <div class="why-matters"><strong>Why it matters:</strong> Must NOT confuse Harnoor's birthday with Katie's birthday</div>
     </div>
-
     <div class="test-card">
       <div class="card-header">
         <div class="left">
           <span class="category-badge abstention">Abstention</span>
           <div class="test-name">Don&#x27;t hallucinate engagement</div>
         </div>
-        <span class="winner-badge hydra-wins">HYDRADB WINS</span>
+        <span class="winner-badge both-fail">BOTH FAIL</span>
       </div>
-      <div class="question">
-        <div class="q-label">Question</div>
-        Are Harnoor and Katie engaged or married?
-      </div>
+      <div class="question"><div class="q-label">Question</div>Are Harnoor and Katie engaged or married?</div>
       <div class="expected"><strong>Expected:</strong> Unknown / not mentioned — buying a car is the biggest commitment mentioned</div>
       <div class="answers-grid">
         <div class="answer-box hydra">
-          <div class="answer-header">
-            <span class="sys-label">HydraDB</span>
-            <span class="latency">526ms</span>
-          </div>
-          <div class="answer-text">This document chronicles the relationship journey of Harnoor Singh and Katie, from their second meeting in October 2020 through buying a car together </div>
+          <div class="answer-header"><span class="sys-label">HydraDB</span><span class="verdict-no">NO</span></div>
+          <div class="answer-text">Not found in memories.</div>
         </div>
         <div class="answer-box vectordb">
-          <div class="answer-header">
-            <span class="sys-label">Traditional Vector DB</span>
-            <span class="latency">45.3ms</span>
-          </div>
-          <div class="answer-text">August 21, 2021 - Attending Their First American Wedding Together: On August 21, 2021, Harnoor and Katie attended their first American wedding togethe</div>
+          <div class="answer-header"><span class="sys-label">Traditional Vector DB</span><span class="verdict-no">NO</span></div>
+          <div class="answer-text">Not found in memories.</div>
         </div>
       </div>
-      <div class="analysis"><strong>Analysis:</strong> HydraDB returns the overview document first — a safer result that doesn&#x27;t imply engagement. Traditional Vector DB returns the wedding attendance chunk, which could mislead an LLM into inferring engagement.</div>
       <div class="why-matters"><strong>Why it matters:</strong> Should NOT infer engagement/marriage from buying a car together</div>
     </div>
-
     <div class="test-card">
       <div class="card-header">
         <div class="left">
@@ -706,31 +483,20 @@
         </div>
         <span class="winner-badge both-fail">BOTH FAIL</span>
       </div>
-      <div class="question">
-        <div class="q-label">Question</div>
-        What did Harnoor and Katie celebrate together that was NOT a birthday?
-      </div>
+      <div class="question"><div class="q-label">Question</div>What did Harnoor and Katie celebrate together that was NOT a birthday?</div>
       <div class="expected"><strong>Expected:</strong> Navratri, July 4th, Valentine&#x27;s Day, Thanksgiving, Christmas, New Year&#x27;s, wedding</div>
       <div class="answers-grid">
         <div class="answer-box hydra">
-          <div class="answer-header">
-            <span class="sys-label">HydraDB</span>
-            <span class="latency">495ms</span>
-          </div>
-          <div class="answer-text">December 23, 2020 - Harnoor&#x27;s Birthday Celebration: Katie surprised Harnoor with a birthday celebration on December 23, 2020. This was their first bir</div>
+          <div class="answer-header"><span class="sys-label">HydraDB</span><span class="verdict-no">NO</span></div>
+          <div class="answer-text">Harnoor and Katie celebrated Navratri together.</div>
         </div>
         <div class="answer-box vectordb">
-          <div class="answer-header">
-            <span class="sys-label">Traditional Vector DB</span>
-            <span class="latency">46.1ms</span>
-          </div>
-          <div class="answer-text">March 16, 2021 - Katie&#x27;s Birthday: Harnoor celebrated Katie&#x27;s birthday on March 16, 2021. He got her a beautiful white layered birthday cake that read</div>
+          <div class="answer-header"><span class="sys-label">Traditional Vector DB</span><span class="verdict-no">NO</span></div>
+          <div class="answer-text">Harnoor and Katie celebrated Christmas, their first Valentine&#x27;s Day, and a New Year&#x27;s trip to Miami together, none of which were birthdays.</div>
         </div>
       </div>
-      <div class="analysis"><strong>Analysis:</strong> Both return birthday chunks in their top results. Vector similarity treats &#x27;NOT a birthday&#x27; the same as &#x27;birthday&#x27; — cosine similarity cannot negate. HydraDB&#x27;s BM25 component also matches on the word &#x27;birthday&#x27;.</div>
-      <div class="why-matters"><strong>Why it matters:</strong> Vector search returns birthday chunks FIRST because &#x27;birthday&#x27; is in the query — cosine similarity can&#x27;t negate</div>
+      <div class="why-matters"><strong>Why it matters:</strong> Vector search returns birthday chunks FIRST because 'birthday' is in the query</div>
     </div>
-
     <div class="test-card">
       <div class="card-header">
         <div class="left">
@@ -739,31 +505,20 @@
         </div>
         <span class="winner-badge both-fail">BOTH FAIL</span>
       </div>
-      <div class="question">
-        <div class="q-label">Question</div>
-        What trips did Harnoor and Katie take that were NOT in Florida?
-      </div>
+      <div class="question"><div class="q-label">Question</div>What trips did Harnoor and Katie take that were NOT in Florida?</div>
       <div class="expected"><strong>Expected:</strong> Princeton/NJ (July 2021), India (March 2022)</div>
       <div class="answers-grid">
         <div class="answer-box hydra">
-          <div class="answer-header">
-            <span class="sys-label">HydraDB</span>
-            <span class="latency">645ms</span>
-          </div>
-          <div class="answer-text">January 1, 2021 - Traveling to Miami, New Year&#x27;s Trip: On January 1, 2021, Harnoor and Katie traveled to Miami together to ring in the New Year. This </div>
+          <div class="answer-header"><span class="sys-label">HydraDB</span><span class="verdict-no">NO</span></div>
+          <div class="answer-text">Harnoor and Katie took a trip to Princeton University in New Jersey that was not in Florida.</div>
         </div>
         <div class="answer-box vectordb">
-          <div class="answer-header">
-            <span class="sys-label">Traditional Vector DB</span>
-            <span class="latency">44.4ms</span>
-          </div>
-          <div class="answer-text">January 1, 2021 - Traveling to Miami, New Year&#x27;s Trip: On January 1, 2021, Harnoor and Katie traveled to Miami together to ring in the New Year. This </div>
+          <div class="answer-header"><span class="sys-label">Traditional Vector DB</span><span class="verdict-no">NO</span></div>
+          <div class="answer-text">Harnoor and Katie took a trip to Princeton University in New Jersey.</div>
         </div>
       </div>
-      <div class="analysis"><strong>Analysis:</strong> Both return Miami and other Florida trips. &#x27;NOT in Florida&#x27; is semantically close to &#x27;in Florida&#x27; in embedding space. Neither system can perform boolean negation on geographic entities.</div>
-      <div class="why-matters"><strong>Why it matters:</strong> Vector returns Miami and FSU trips (highest similarity to &#x27;trip&#x27;) even though they&#x27;re IN Florida</div>
+      <div class="why-matters"><strong>Why it matters:</strong> Vector returns Miami trips even though they're IN Florida</div>
     </div>
-
     <div class="test-card">
       <div class="card-header">
         <div class="left">
@@ -772,130 +527,86 @@
         </div>
         <span class="winner-badge hydra-wins">HYDRADB WINS</span>
       </div>
-      <div class="question">
-        <div class="q-label">Question</div>
-        What did Harnoor and Katie do the day after visiting Princeton?
-      </div>
+      <div class="question"><div class="q-label">Question</div>What did Harnoor and Katie do the day after visiting Princeton?</div>
       <div class="expected"><strong>Expected:</strong> July 4th fireworks celebration — they watched fireworks in a large crowd</div>
       <div class="answers-grid">
         <div class="answer-box hydra">
-          <div class="answer-header">
-            <span class="sys-label">HydraDB</span>
-            <span class="latency">476ms</span>
-          </div>
-          <div class="answer-text">October 18, 2020 - Meeting for the Second Time: Harnoor and Katie met for the second time on October 18, 2020. They had first connected earlier that m</div>
+          <div class="answer-header"><span class="sys-label">HydraDB</span><span class="verdict-yes">YES</span></div>
+          <div class="answer-text">The day after visiting Princeton, Harnoor and Katie celebrated the Fourth of July by watching fireworks in a large crowd.</div>
         </div>
         <div class="answer-box vectordb">
-          <div class="answer-header">
-            <span class="sys-label">Traditional Vector DB</span>
-            <span class="latency">46.3ms</span>
-          </div>
-          <div class="answer-text">July 3, 2021 - Visiting Princeton University: On July 3, 2021, Harnoor and Katie visited Princeton University in New Jersey. They took a selfie on the</div>
+          <div class="answer-header"><span class="sys-label">Traditional Vector DB</span><span class="verdict-no">NO</span></div>
+          <div class="answer-text">Not found in memories.</div>
         </div>
       </div>
-      <div class="analysis"><strong>Analysis:</strong> HydraDB returns Princeton AND July 4th in its top 3 — the graph&#x27;s temporal edges (NEXT relationship) connect July 3 Princeton to July 4 fireworks. Traditional Vector DB only returns Princeton without the next-day event.</div>
-      <div class="why-matters"><strong>Why it matters:</strong> Vector search has no concept of &#x27;the day after&#x27; — returns Princeton chunk or random travel chunks</div>
+      <div class="why-matters"><strong>Why it matters:</strong> Vector search has no concept of 'the day after'</div>
     </div>
-
     <div class="test-card">
       <div class="card-header">
         <div class="left">
           <span class="category-badge temporal">Temporal Adjacency</span>
           <div class="test-name">Chronological ordering of milestones</div>
         </div>
-        <span class="winner-badge hydra-wins">HYDRADB WINS</span>
+        <span class="winner-badge both-fail">BOTH FAIL</span>
       </div>
-      <div class="question">
-        <div class="q-label">Question</div>
-        Put these events in chronological order: buying a car, visiting India, attending a wedding
-      </div>
+      <div class="question"><div class="q-label">Question</div>Put these events in chronological order: buying a car, visiting India, attending a wedding</div>
       <div class="expected"><strong>Expected:</strong> Wedding (Aug 2021) → India (March 2022) → Tesla (May 2022)</div>
       <div class="answers-grid">
         <div class="answer-box hydra">
-          <div class="answer-header">
-            <span class="sys-label">HydraDB</span>
-            <span class="latency">501ms</span>
-          </div>
-          <div class="answer-text">This document chronicles the relationship journey of Harnoor Singh and Katie, from their second meeting in October 2020 through buying a car together </div>
+          <div class="answer-header"><span class="sys-label">HydraDB</span><span class="verdict-no">NO</span></div>
+          <div class="answer-text">Visiting India, then buying a car; attending a wedding is not found in memories.</div>
         </div>
         <div class="answer-box vectordb">
-          <div class="answer-header">
-            <span class="sys-label">Traditional Vector DB</span>
-            <span class="latency">46.1ms</span>
-          </div>
-          <div class="answer-text">This document chronicles the relationship journey of Harnoor Singh and Katie, from their second meeting in October 2020 through buying a car together </div>
+          <div class="answer-header"><span class="sys-label">Traditional Vector DB</span><span class="verdict-no">NO</span></div>
+          <div class="answer-text">Attending a wedding, visiting India, buying a car.</div>
         </div>
       </div>
-      <div class="analysis"><strong>Analysis:</strong> HydraDB returns all three mentioned events (car, India/wedding) in top 3. Traditional Vector DB misses the wedding chunk entirely. HydraDB&#x27;s graph edges link these milestone events.</div>
-      <div class="why-matters"><strong>Why it matters:</strong> Vector returns chunks in SIMILARITY order, not chronological — embeddings have no clock</div>
+      <div class="why-matters"><strong>Why it matters:</strong> Vector returns chunks in SIMILARITY order, not chronological</div>
     </div>
-
     <div class="test-card">
       <div class="card-header">
         <div class="left">
           <span class="category-badge entity">Entity Direction</span>
           <div class="test-name">Directional gift giving</div>
         </div>
-        <span class="winner-badge hydra-wins">HYDRADB WINS</span>
+        <span class="winner-badge both-fail">BOTH FAIL</span>
       </div>
-      <div class="question">
-        <div class="q-label">Question</div>
-        What did Katie specifically do for Harnoor&#x27;s birthday?
-      </div>
+      <div class="question"><div class="q-label">Question</div>What did Katie specifically do for Harnoor&#x27;s birthday?</div>
       <div class="expected"><strong>Expected:</strong> Surprised him with a large blue &#x27;Happy Birthday&#x27; gift bag at his apartment on December 23, 2020</div>
       <div class="answers-grid">
         <div class="answer-box hydra">
-          <div class="answer-header">
-            <span class="sys-label">HydraDB</span>
-            <span class="latency">489ms</span>
-          </div>
-          <div class="answer-text">December 23, 2020 - Harnoor&#x27;s Birthday Celebration: Katie surprised Harnoor with a birthday celebration on December 23, 2020. This was their first bir</div>
+          <div class="answer-header"><span class="sys-label">HydraDB</span><span class="verdict-no">NO</span></div>
+          <div class="answer-text">Katie surprised Harnoor with a birthday celebration and got him a large blue &#x27;Happy Birthday&#x27; gift bag.</div>
         </div>
         <div class="answer-box vectordb">
-          <div class="answer-header">
-            <span class="sys-label">Traditional Vector DB</span>
-            <span class="latency">45.8ms</span>
-          </div>
-          <div class="answer-text">March 16, 2021 - Katie&#x27;s Birthday: Harnoor celebrated Katie&#x27;s birthday on March 16, 2021. He got her a beautiful white layered birthday cake that read</div>
+          <div class="answer-header"><span class="sys-label">Traditional Vector DB</span><span class="verdict-no">NO</span></div>
+          <div class="answer-text">Katie surprised Harnoor with a birthday celebration and got him a large blue &#x27;Happy Birthday&#x27; gift bag.</div>
         </div>
       </div>
-      <div class="analysis"><strong>Analysis:</strong> HydraDB correctly ranks Harnoor&#x27;s birthday (Katie→Harnoor gift) as #1. Traditional Vector DB returns Katie&#x27;s birthday first (Harnoor→Katie direction) — it can&#x27;t distinguish gift direction from embeddings alone.</div>
-      <div class="why-matters"><strong>Why it matters:</strong> Vector returns both birthday chunks equally — can&#x27;t distinguish Katie→Harnoor from Harnoor→Katie direction</div>
+      <div class="why-matters"><strong>Why it matters:</strong> Vector can't distinguish Katie→Harnoor from Harnoor→Katie</div>
     </div>
-
     <div class="test-card">
       <div class="card-header">
         <div class="left">
           <span class="category-badge entity">Entity Direction</span>
           <div class="test-name">One-directional cultural adoption</div>
         </div>
-        <span class="winner-badge hydra-wins">HYDRADB WINS</span>
+        <span class="winner-badge both-fail">BOTH FAIL</span>
       </div>
-      <div class="question">
-        <div class="q-label">Question</div>
-        Which of Harnoor&#x27;s Indian traditions did Katie participate in?
-      </div>
+      <div class="question"><div class="q-label">Question</div>Which of Harnoor&#x27;s Indian traditions did Katie participate in?</div>
       <div class="expected"><strong>Expected:</strong> Navratri (wore lehenga, danced Garba), wore Indian clothing at Taj Mahal</div>
       <div class="answers-grid">
         <div class="answer-box hydra">
-          <div class="answer-header">
-            <span class="sys-label">HydraDB</span>
-            <span class="latency">509ms</span>
-          </div>
-          <div class="answer-text">This document chronicles the relationship journey of Harnoor Singh and Katie, from their second meeting in October 2020 through buying a car together </div>
+          <div class="answer-header"><span class="sys-label">HydraDB</span><span class="verdict-no">NO</span></div>
+          <div class="answer-text">Katie participated in Harnoor&#x27;s Indian tradition of celebrating Navratri, including dressing in traditional attire and dancing Garba.</div>
         </div>
         <div class="answer-box vectordb">
-          <div class="answer-header">
-            <span class="sys-label">Traditional Vector DB</span>
-            <span class="latency">43.9ms</span>
-          </div>
-          <div class="answer-text">October 15, 2021 - Celebrating Navratri Together: On October 15, 2021, Harnoor and Katie celebrated Navratri together - a major Hindu festival. They b</div>
+          <div class="answer-header"><span class="sys-label">Traditional Vector DB</span><span class="verdict-no">NO</span></div>
+          <div class="answer-text">Katie participated in Harnoor&#x27;s Indian tradition of celebrating Navratri, including dressing in traditional attire and performing the Garba dance.</div>
         </div>
       </div>
-      <div class="analysis"><strong>Analysis:</strong> HydraDB returns Navratri AND Taj Mahal (both Katie→Indian traditions). Traditional Vector DB returns Christmas (Harnoor→American traditions) in its results — it can&#x27;t filter by the direction of cultural adoption.</div>
-      <div class="why-matters"><strong>Why it matters:</strong> Vector also returns Thanksgiving/Christmas (Harnoor adopting Katie&#x27;s traditions) — can&#x27;t filter by direction</div>
+      <div class="why-matters"><strong>Why it matters:</strong> Vector returns Thanksgiving/Christmas — can't filter by direction</div>
     </div>
-
     <div class="test-card">
       <div class="card-header">
         <div class="left">
@@ -904,29 +615,156 @@
         </div>
         <span class="winner-badge both-fail">BOTH FAIL</span>
       </div>
-      <div class="question">
-        <div class="q-label">Question</div>
-        Which events happened outside of the United States?
-      </div>
+      <div class="question"><div class="q-label">Question</div>Which events happened outside of the United States?</div>
       <div class="expected"><strong>Expected:</strong> Only the India trip — visiting the Taj Mahal in March 2022</div>
       <div class="answers-grid">
         <div class="answer-box hydra">
-          <div class="answer-header">
-            <span class="sys-label">HydraDB</span>
-            <span class="latency">534ms</span>
-          </div>
-          <div class="answer-text">January 1, 2021 - Traveling to Miami, New Year&#x27;s Trip: On January 1, 2021, Harnoor and Katie traveled to Miami together to ring in the New Year. This </div>
+          <div class="answer-header"><span class="sys-label">HydraDB</span><span class="verdict-no">NO</span></div>
+          <div class="answer-text">Not found in memories.</div>
         </div>
         <div class="answer-box vectordb">
-          <div class="answer-header">
-            <span class="sys-label">Traditional Vector DB</span>
-            <span class="latency">49.2ms</span>
-          </div>
-          <div class="answer-text">July 4, 2021 - Fourth of July Fireworks Celebration: Harnoor and Katie celebrated the Fourth of July 2021 together, watching fireworks in a large crow</div>
+          <div class="answer-header"><span class="sys-label">Traditional Vector DB</span><span class="verdict-no">NO</span></div>
+          <div class="answer-text">Not found in memories.</div>
         </div>
       </div>
-      <div class="analysis"><strong>Analysis:</strong> Both fail to rank the India/Taj Mahal trip first. The query &#x27;outside of the United States&#x27; is semantically ambiguous in embedding space — it matches any travel-related content.</div>
-      <div class="why-matters"><strong>Why it matters:</strong> Vector returns any travel chunk (Miami, Princeton, India all score similarly on &#x27;events outside&#x27;) — no geographic entity awareness</div>
+      <div class="why-matters"><strong>Why it matters:</strong> Vector returns any travel chunk — no geographic entity awareness</div>
+    </div>
+    <div class="test-card">
+      <div class="card-header">
+        <div class="left">
+          <span class="category-badge aggregation">Aggregation</span>
+          <div class="test-name">Exhaustive listing</div>
+        </div>
+        <span class="winner-badge both-fail">BOTH FAIL</span>
+      </div>
+      <div class="question"><div class="q-label">Question</div>List every holiday or celebration Harnoor and Katie shared together</div>
+      <div class="expected"><strong>Expected:</strong> Harnoor&#x27;s birthday, Katie&#x27;s birthday, NYE 2021, NYE 2022, Valentine&#x27;s Day, Navratri, July 4th, Thanksgiving, Christmas, wedding attendance</div>
+      <div class="answers-grid">
+        <div class="answer-box hydra">
+          <div class="answer-header"><span class="sys-label">HydraDB</span><span class="verdict-no">NO</span></div>
+          <div class="answer-text">Harnoor and Katie shared Christmas (in 2020 and 2021), Navratri, Katie&#x27;s birthday (March 16, 2021), and Harnoor&#x27;s birthday (December 2020).</div>
+        </div>
+        <div class="answer-box vectordb">
+          <div class="answer-header"><span class="sys-label">Traditional Vector DB</span><span class="verdict-no">NO</span></div>
+          <div class="answer-text">Harnoor and Katie shared Christmas, Thanksgiving, Katie&#x27;s Birthday, Harnoor&#x27;s Birthday, and Valentine&#x27;s Day together.</div>
+        </div>
+      </div>
+      <div class="why-matters"><strong>Why it matters:</strong> Top-5 retrieval returns ~5 most celebration-like chunks and misses the rest</div>
+    </div>
+
+  <div class="section-header" style="margin-top: 48px;">
+    <h2>Head-to-Head Scored Comparison</h2>
+    <p>5 selected tests re-evaluated with nuanced scoring (1&ndash;10 scale) instead of binary YES/NO verdicts</p>
+  </div>
+
+  <div style="display: flex; justify-content: center; gap: 32px; padding: 24px 0; flex-wrap: wrap; margin-bottom: 24px;">
+    <div class="score-card hydra" style="min-width: 150px; padding: 24px 32px;">
+      <div class="label">HydraDB Wins</div>
+      <div class="number">3</div>
+      <div class="desc">of 5 scored</div>
+    </div>
+    <div class="score-card vectordb" style="min-width: 150px; padding: 24px 32px;">
+      <div class="label">Vector DB Wins</div>
+      <div class="number">1</div>
+      <div class="desc">of 5 scored</div>
+    </div>
+    <div class="score-card tie" style="min-width: 150px; padding: 24px 32px;">
+      <div class="label">Ties</div>
+      <div class="number">1</div>
+      <div class="desc">of 5 scored</div>
+    </div>
+  </div>
+
+    <div class="test-card">
+      <div class="card-header">
+        <div class="left">
+          <span class="category-badge extraction">Information Extraction</span>
+          <div class="test-name">Buried detail in rich context</div>
+        </div>
+        <span class="winner-badge tie">TIE &mdash; 10 vs 10</span>
+      </div>
+      <div class="question"><div class="q-label">Question</div>What car did Harnoor and Katie buy together?</div>
+      <div class="expected"><strong>Expected:</strong> White Tesla Model 3</div>
+      <div class="answers-grid">
+        <div class="answer-box hydra">
+          <div class="answer-header"><span class="sys-label">HydraDB</span><span class="verdict-yes" style="font-size:0.7rem;">10/10</span></div>
+          <div class="answer-text">Harnoor and Katie bought a white Tesla Model 3 together.</div>
+        </div>
+        <div class="answer-box vectordb">
+          <div class="answer-header"><span class="sys-label">Traditional Vector DB</span><span class="verdict-yes" style="font-size:0.7rem;">10/10</span></div>
+          <div class="answer-text">Harnoor and Katie bought a white Tesla Model 3 together.</div>
+        </div>
+      </div>
+      <div class="why-matters"><strong>Judge reasoning:</strong> Both provided identical, perfectly matching answers with correct color, make, and model.</div>
+    </div>
+
+    <div class="test-card">
+      <div class="card-header">
+        <div class="left">
+          <span class="category-badge semantic">Semantic Understanding</span>
+          <div class="test-name">Relationship milestone inference</div>
+        </div>
+        <span class="winner-badge hydra-wins">HYDRADB WINS &mdash; 10 vs 9</span>
+      </div>
+      <div class="question"><div class="q-label">Question</div>What was the significance of Harnoor and Katie attending a wedding together?</div>
+      <div class="expected"><strong>Expected:</strong> It signaled deeper commitment &mdash; being invited to important life events as a unit</div>
+      <div class="answers-grid">
+        <div class="answer-box hydra">
+          <div class="answer-header"><span class="sys-label">HydraDB</span><span class="verdict-yes" style="font-size:0.7rem;">10/10</span></div>
+          <div class="answer-text">Attending their first American wedding together was a significant cultural milestone for Harnoor and signaled a deeper level of commitment as a couple, as they were invited to important life events as a unit.</div>
+        </div>
+        <div class="answer-box vectordb">
+          <div class="answer-header"><span class="sys-label">Traditional Vector DB</span><span class="verdict-yes" style="font-size:0.7rem;">9/10</span></div>
+          <div class="answer-text">Attending their first American wedding together was a significant cultural milestone for Harnoor and signaled a deeper level of commitment as they were invited to important life events as a couple.</div>
+        </div>
+      </div>
+      <div class="why-matters"><strong>Judge reasoning:</strong> HydraDB precisely matched the expected phrasing &ldquo;as a unit&rdquo;; Vector DB used the synonymous &ldquo;as a couple&rdquo; instead.</div>
+    </div>
+
+    <div class="test-card">
+      <div class="card-header">
+        <div class="left">
+          <span class="category-badge negation">Negation</span>
+          <div class="test-name">Negation &mdash; not a birthday</div>
+        </div>
+        <span class="winner-badge hydra-wins">HYDRADB WINS &mdash; 7 vs 5</span>
+      </div>
+      <div class="question"><div class="q-label">Question</div>What did Harnoor and Katie celebrate together that was NOT a birthday?</div>
+      <div class="expected"><strong>Expected:</strong> Navratri, July 4th, Valentine&#x27;s Day, Thanksgiving, Christmas, New Year&#x27;s, wedding</div>
+      <div class="answers-grid">
+        <div class="answer-box hydra">
+          <div class="answer-header"><span class="sys-label">HydraDB</span><span class="verdict-yes" style="font-size:0.7rem;">7/10</span></div>
+          <div class="answer-text">Harnoor and Katie celebrated Navratri and the Fourth of July together.</div>
+        </div>
+        <div class="answer-box vectordb">
+          <div class="answer-header"><span class="sys-label">Traditional Vector DB</span><span class="verdict-no" style="font-size:0.7rem;">5/10</span></div>
+          <div class="answer-text">Harnoor and Katie celebrated Valentine&#x27;s Day together.</div>
+        </div>
+      </div>
+      <div class="why-matters"><strong>Judge reasoning:</strong> HydraDB recalled 2 non-birthday celebrations vs Vector DB&#x27;s 1. Both correct but incomplete &mdash; HydraDB had better recall coverage.</div>
+    </div>
+
+    <div class="test-card">
+      <div class="card-header">
+        <div class="left">
+          <span class="category-badge entity">Entity Direction</span>
+          <div class="test-name">One-directional cultural adoption</div>
+        </div>
+        <span class="winner-badge hydra-wins">HYDRADB WINS &mdash; 8 vs 6</span>
+      </div>
+      <div class="question"><div class="q-label">Question</div>Which of Harnoor&#x27;s Indian traditions did Katie participate in?</div>
+      <div class="expected"><strong>Expected:</strong> Navratri (wore lehenga, danced Garba), wore Indian clothing at Taj Mahal</div>
+      <div class="answers-grid">
+        <div class="answer-box hydra">
+          <div class="answer-header"><span class="sys-label">HydraDB</span><span class="verdict-yes" style="font-size:0.7rem;">8/10</span></div>
+          <div class="answer-text">Katie participated in the Indian tradition of celebrating Navratri, including dressing in traditional attire and performing the Garba dance.</div>
+        </div>
+        <div class="answer-box vectordb">
+          <div class="answer-header"><span class="sys-label">Traditional Vector DB</span><span class="verdict-no" style="font-size:0.7rem;">6/10</span></div>
+          <div class="answer-text">Katie participated in Harnoor&#x27;s Indian tradition of celebrating Navratri and dancing Garba.</div>
+        </div>
+      </div>
+      <div class="why-matters"><strong>Judge reasoning:</strong> HydraDB included the detail about dressing in traditional attire. Both missed the Taj Mahal mention.</div>
     </div>
 
     <div class="test-card">
@@ -935,33 +773,30 @@
           <span class="category-badge aggregation">Aggregation</span>
           <div class="test-name">Exhaustive listing</div>
         </div>
-        <span class="winner-badge tie">TIE</span>
+        <span class="winner-badge vectordb-wins">VECTOR DB WINS &mdash; 4 vs 5</span>
       </div>
-      <div class="question">
-        <div class="q-label">Question</div>
-        List every holiday or celebration Harnoor and Katie shared together
-      </div>
+      <div class="question"><div class="q-label">Question</div>List every holiday or celebration Harnoor and Katie shared together</div>
       <div class="expected"><strong>Expected:</strong> Harnoor&#x27;s birthday, Katie&#x27;s birthday, NYE 2021, NYE 2022, Valentine&#x27;s Day, Navratri, July 4th, Thanksgiving, Christmas, wedding attendance</div>
       <div class="answers-grid">
         <div class="answer-box hydra">
-          <div class="answer-header">
-            <span class="sys-label">HydraDB</span>
-            <span class="latency">499ms</span>
-          </div>
-          <div class="answer-text">December 23, 2020 - Harnoor&#x27;s Birthday Celebration: Katie surprised Harnoor with a birthday celebration on December 23, 2020. This was their first bir</div>
+          <div class="answer-header"><span class="sys-label">HydraDB</span><span class="verdict-no" style="font-size:0.7rem;">4/10</span></div>
+          <div class="answer-text">Harnoor and Katie shared Harnoor&#x27;s Birthday (December 2020), Christmas (in 2020 and 2021), Katie&#x27;s Birthday (March 2021), and the Fourth of July (July 2021).</div>
         </div>
         <div class="answer-box vectordb">
-          <div class="answer-header">
-            <span class="sys-label">Traditional Vector DB</span>
-            <span class="latency">52.5ms</span>
-          </div>
-          <div class="answer-text">December 25, 2021 - Christmas Together: Harnoor and Katie celebrated Christmas together on December 25, 2021. They posed by a decorated Christmas tree</div>
+          <div class="answer-header"><span class="sys-label">Traditional Vector DB</span><span class="verdict-no" style="font-size:0.7rem;">5/10</span></div>
+          <div class="answer-text">Harnoor and Katie shared Christmas, Thanksgiving, Katie&#x27;s birthday, Harnoor&#x27;s birthday, and Valentine&#x27;s Day.</div>
         </div>
       </div>
-      <div class="analysis"><strong>Analysis:</strong> Both are limited to returning 5 chunks for a question that spans 10+ celebrations. This is a fundamental limitation of top-k retrieval, not specific to either system.</div>
-      <div class="why-matters"><strong>Why it matters:</strong> Vector top-5 retrieval returns ~5 most &#x27;celebration-like&#x27; chunks and misses the rest — can&#x27;t aggregate across all 19 memories</div>
+      <div class="why-matters"><strong>Judge reasoning:</strong> Vector DB listed 5 of 10 expected celebrations vs HydraDB&#x27;s 4. Both incomplete &mdash; top-5 retrieval inherently limits exhaustive recall.</div>
     </div>
 
+  <div class="section-header" style="margin-top: 48px;">
+    <h2>Key Takeaway</h2>
+  </div>
+  <div class="thesis-box" style="border-color: var(--hydra-border); background: linear-gradient(135deg, rgba(129,140,248,0.08), rgba(99,102,241,0.04));">
+    <h3 style="color: var(--hydra);">Scored comparison reveals HydraDB&#x27;s nuanced advantage</h3>
+    <p>Binary YES/NO verdicts obscure cases where both systems answer partially. When scored on a 1&ndash;10 scale, HydraDB wins <strong>3 of 5</strong> head-to-head comparisons &mdash; excelling at <strong>semantic precision</strong> (milestone inference), <strong>negation handling</strong> (filtering out birthdays), and <strong>entity direction</strong> (cultural adoption details). Vector DB&#x27;s single win comes from <strong>exhaustive listing</strong>, where similarity-based retrieval casts a wider net across celebration-type chunks. Both systems tie on straightforward extraction tasks.</p>
+  </div>
 
 </div>
 </body>
