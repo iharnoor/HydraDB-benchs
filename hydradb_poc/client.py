@@ -128,28 +128,55 @@ class HydraDBClient:
 
     # ── Search & Recall ──────────────────────────────────────
 
-    def full_recall(self, query: str, max_results: int = 10) -> dict:
+    def full_recall(
+        self,
+        query: str,
+        max_results: int = 10,
+        sub_tenant_id: str = "",
+        mode: str = "fast",
+        alpha: float | str = 0.8,
+        graph_context: bool = False,
+    ) -> dict:
         """
         Hybrid search: vector + graph + BM25.
         Returns raw ranked chunks without LLM generation.
         """
-        return self._post("/recall/full_recall", {
+        payload = {
             "tenant_id": self.tenant_id,
             "query": query,
             "max_results": max_results,
-        })
+            "mode": mode,
+            "alpha": alpha,
+            "graph_context": graph_context,
+        }
+        if sub_tenant_id:
+            payload["sub_tenant_id"] = sub_tenant_id
+        return self._post("/recall/full_recall", payload)
 
-    def recall_preferences(self, query: str, max_results: int = 10) -> dict:
+    def recall_preferences(
+        self,
+        query: str,
+        max_results: int = 10,
+        sub_tenant_id: str = "",
+        mode: str = "fast",
+        alpha: float | str = 0.8,
+        graph_context: bool = False,
+    ) -> dict:
         """
-        Fast preference/memory recall.
-        Uses hybrid search: dense + inferred + BM25.
+        Memory/preference recall using hybrid search: dense + inferred + BM25.
         Inferred embeddings require infer=True during ingestion.
         """
-        return self._post("/recall/recall_preferences", {
+        payload = {
             "tenant_id": self.tenant_id,
             "query": query,
             "max_results": max_results,
-        })
+            "mode": mode,
+            "alpha": alpha,
+            "graph_context": graph_context,
+        }
+        if sub_tenant_id:
+            payload["sub_tenant_id"] = sub_tenant_id
+        return self._post("/recall/recall_preferences", payload)
 
     def boolean_recall(self, query: str, max_results: int = 10, operator: str = "or") -> dict:
         """Full-text BM25 search."""

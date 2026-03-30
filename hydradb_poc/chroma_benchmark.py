@@ -12,12 +12,13 @@
 import os
 import json
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from dotenv import load_dotenv
+import fitz  # PyMuPDF
+from google import genai
 
 from hydradb_poc.client import HydraDBClient
 from hydradb_poc.chroma_client import ChromaClient
-from hydradb_poc.ingest import TIMELINE_CHUNKS
 
 load_dotenv()
 
@@ -231,6 +232,87 @@ TEST_CASES = [
 
 
 # ═══════════════════════════════════════════════════════════════
+#  PDF TEXT EXTRACTION — same text for both systems
+# ═══════════════════════════════════════════════════════════════
+
+PDF_PATH = os.path.join(os.path.dirname(__file__), "..", "InputData", "relationship_timeline.pdf")
+
+
+def extract_pdf_chunks(pdf_path: str = PDF_PATH) -> list[str]:
+    """Extract one text chunk per page from the PDF."""
+    doc = fitz.open(pdf_path)
+    chunks = []
+    for page in doc:
+        text = page.get_text().strip()
+        if text:
+            # Normalize whitespace (PDF line breaks → single spaces)
+            text = " ".join(text.split())
+            chunks.append(text)
+    doc.close()
+    return chunks
+
+
+# ═══════════════════════════════════════════════════════════════
+#  LLM-AS-JUDGE (Gemini 2.5 Flash)
+# ═══════════════════════════════════════════════════════════════
+
+def _get_gemini_client():
+    api_key = os.getenv("GEMINI_API_KEY", "")
+    if not api_key:
+        raise ValueError("Set GEMINI_API_KEY in .env for LLM-as-judge evaluation")
+    return genai.Client(api_key=api_key)
+
+
+def generate_answer(client, question: str, chunks: list[str]) -> str:
+    """Use Gemini to generate a one-sentence answer from retrieved chunks."""
+    if not chunks:
+        return "(no chunks retrieved)"
+    context = "\n\n---\n\n".join(chunks[:5])
+    resp = client.models.generate_content(
+        model="gemini-3-flash-preview",
+        contents=(
+            f"Based ONLY on these retrieved memories, answer the question in ONE concise sentence. "
+            f"If the memories don't contain the answer, say 'Not found in memories.'\n\n"
+            f"Question: {question}\n\n"
+            f"Retrieved memories:\n{context}"
+        ),
+    )
+    return resp.text.strip()
+
+
+def judge_answer(client, question: str, expected: str, ai_answer: str) -> dict:
+    """
+    LLM-as-judge: score the AI answer against the expected answer.
+    Returns {"verdict": "YES"/"NO", "score": 1-10, "reasoning": str}
+    """
+    resp = client.models.generate_content(
+        model="gemini-3-flash-preview",
+        contents=(
+            f"You are a strict evaluator. Compare the AI answer against the expected answer.\n\n"
+            f"Question: {question}\n"
+            f"Expected answer: {expected}\n"
+            f"AI answer: {ai_answer}\n\n"
+            f"Evaluate:\n"
+            f"1. Does the AI answer contain the KEY FACTS from the expected answer? (YES/NO)\n"
+            f"2. Score 1-10 for completeness and accuracy.\n\n"
+            f"Respond in EXACTLY this JSON format, no other text:\n"
+            f'{{"verdict": "YES or NO", "score": <1-10>, "reasoning": "<one sentence>"}}'
+        ),
+    )
+    text = resp.text.strip()
+    # Strip markdown code fences if present
+    if text.startswith("```"):
+        text = text.split("\n", 1)[1] if "\n" in text else text[3:]
+        if text.endswith("```"):
+            text = text[:-3]
+        text = text.strip()
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        return {"verdict": "NO", "score": 0, "reasoning": f"Parse error: {text[:200]}"}
+
+
+# ═══════════════════════════════════════════════════════════════
 #  RESULT TYPE
 # ═══════════════════════════════════════════════════════════════
 
@@ -293,14 +375,14 @@ def compute_mrr(chunks: list[str], gold_groups: list[list[str]]) -> float:
 #  CHROMADB RUNNER
 # ═══════════════════════════════════════════════════════════════
 
-def run_chroma() -> tuple[list[Result], ChromaClient]:
-    """Ingest all timeline chunks into ChromaDB, then run queries."""
+def run_chroma(chunks: list[str]) -> tuple[list[Result], ChromaClient]:
+    """Ingest PDF text chunks into ChromaDB, then run queries."""
     print("\n  [Vector DB] Initializing local vector database...")
     client = ChromaClient(collection_name="relationship_timeline")
 
-    # Ingest all timeline chunks
-    print(f"  [Vector DB] Ingesting {len(TIMELINE_CHUNKS)} memory chunks...")
-    client.add_memories(TIMELINE_CHUNKS)
+    # Ingest all PDF text chunks
+    print(f"  [Vector DB] Ingesting {len(chunks)} PDF text chunks...")
+    client.add_memories(chunks)
     print(f"  [Vector DB] {client.count()} chunks indexed (instant — local embeddings)")
 
     results = []
@@ -309,7 +391,7 @@ def run_chroma() -> tuple[list[Result], ChromaClient]:
 
         start = time.time()
         try:
-            hits = client.search(case.question, top_k=5)
+            hits = client.search(case.question, top_k=10)
             latency = (time.time() - start) * 1000
 
             raw_chunks = [h["text"] for h in hits] if hits else []
@@ -338,11 +420,29 @@ def run_chroma() -> tuple[list[Result], ChromaClient]:
 #  HYDRADB RUNNER
 # ═══════════════════════════════════════════════════════════════
 
-def run_hydradb(api_key: str) -> list[Result]:
-    """Query HydraDB (data already ingested in live_benchmark tenant)."""
+def run_hydradb(
+    api_key: str,
+    chunks: list[str],
+    tenant_id: str = "test1",
+    sub_tenant_id: str = "opj3bivvmh",
+    skip_ingest: bool = False,
+) -> list[Result]:
+    """Run queries against HydraDB using full_recall (hybrid vector+graph+BM25)."""
     client = HydraDBClient(api_key=api_key)
-    client.use_tenant("live_benchmark")
-    print(f"\n  [HydraDB] Using tenant: live_benchmark")
+
+    # ── Fresh tenant + chunk ingestion ──────────────────────
+    print(f"\n  [HydraDB] Using tenant: {tenant_id}, sub_tenant: {sub_tenant_id}")
+    client.use_tenant(tenant_id)
+
+    if not skip_ingest:
+        print(f"  [HydraDB] Ingesting {len(chunks)} PDF text chunks one-by-one...")
+        for i, chunk in enumerate(chunks):
+            result = client.add_memory(chunk, infer=True)
+            status = result.get("results", [{}])[0].get("status", "?")
+            print(f"    [{i+1}/{len(chunks)}] {status} ({len(chunk)} chars)")
+            time.sleep(1)  # Small delay between adds
+        print("  [HydraDB] All chunks submitted. Waiting 60s for indexing...")
+        time.sleep(60)
 
     results = []
     for i, case in enumerate(TEST_CASES):
@@ -350,22 +450,27 @@ def run_hydradb(api_key: str) -> list[Result]:
 
         start = time.time()
         try:
-            resp = client.recall_preferences(case.question, max_results=5)
+            resp = client.recall_preferences(
+                query=case.question,
+                max_results=10,
+                sub_tenant_id=sub_tenant_id,
+                graph_context=True,
+            )
             latency = (time.time() - start) * 1000
 
-            chunks = resp.get("chunks", [])
-            raw_chunks = [c.get("chunk_content", "") for c in chunks]
-            if chunks:
+            resp_chunks = resp.get("chunks", [])
+            raw_chunks = [c.get("chunk_content", "") for c in resp_chunks]
+            if resp_chunks:
                 answer = " | ".join(
-                    c.get("chunk_content", "")[:150] for c in chunks[:3]
+                    c.get("chunk_content", "")[:150] for c in resp_chunks[:3]
                 )
             else:
                 answer = str(resp)[:200]
 
-            print(f"{latency:.0f}ms ({len(chunks)} chunks)")
+            print(f"{latency:.0f}ms ({len(resp_chunks)} chunks)")
             results.append(Result(
                 "HydraDB", case.name, case.category,
-                answer[:500], latency, len(chunks), "", raw_chunks,
+                answer[:500], latency, len(resp_chunks), "", raw_chunks,
             ))
         except Exception as e:
             latency = (time.time() - start) * 1000
@@ -389,9 +494,13 @@ def main():
         print("Set HYDRADB_API_KEY in .env")
         return
 
+    # ── Extract PDF text (same data for both systems) ─────
+    pdf_chunks = extract_pdf_chunks()
+
     print("=" * 70)
     print("  BENCHMARK: HydraDB vs Traditional Vector DB")
-    print(f"  {len(TEST_CASES)} test cases | 5 categories")
+    print(f"  {len(TEST_CASES)} test cases | {len(pdf_chunks)} PDF text chunks")
+    print(f"  Source: relationship_timeline.pdf (text extracted, identical for both)")
     print(f"  Vector DB: local, pure cosine similarity, standard embeddings")
     print(f"  HydraDB:  cloud, hybrid vector+graph+BM25")
     print("=" * 70)
@@ -400,52 +509,70 @@ def main():
     print(f"\n{'─'*70}")
     print("  RUNNING TRADITIONAL VECTOR DB (Pure Vector)")
     print(f"{'─'*70}")
-    chroma_results, chroma_client = run_chroma()
+    chroma_results, chroma_client = run_chroma(pdf_chunks)
 
     # ── Run HydraDB ───────────────────────────────────────
     print(f"\n{'─'*70}")
-    print("  RUNNING HYDRADB (Hybrid)")
+    print("  RUNNING HYDRADB (Recall Preferences — hybrid vector+graph+BM25)")
     print(f"{'─'*70}")
-    hydra_results = run_hydradb(hydra_key)
+    hydra_results = run_hydradb(
+        hydra_key, pdf_chunks,
+        tenant_id="test1",
+        sub_tenant_id="opj3bivvmh",
+        skip_ingest=True,  # Data already uploaded as memories
+    )
 
-    # ── Side-by-Side ──────────────────────────────────────
+    # ── LLM-as-Judge Evaluation ────────────────────────────
     print(f"\n{'='*70}")
-    print("  RESULTS: SIDE-BY-SIDE COMPARISON")
+    print("  LLM-AS-JUDGE EVALUATION (Gemini 3 Flash)")
     print(f"{'='*70}")
 
-    # ── Compute recall@5 and MRR per test case ────────────
+    gemini = _get_gemini_client()
+
     comparison = []
-    h_recalls, c_recalls = [], []
-    h_mrrs, c_mrrs = [], []
+    h_scores, c_scores = [], []
+    h_yeses, c_yeses = 0, 0
 
-    for case, chroma, hydra in zip(TEST_CASES, chroma_results, hydra_results):
-        h_recall = compute_recall_at_k(hydra.raw_chunks, case.gold_keywords, k=5)
-        c_recall = compute_recall_at_k(chroma.raw_chunks, case.gold_keywords, k=5)
-        h_mrr = compute_mrr(hydra.raw_chunks, case.gold_keywords)
-        c_mrr = compute_mrr(chroma.raw_chunks, case.gold_keywords)
+    for i, (case, chroma, hydra) in enumerate(zip(TEST_CASES, chroma_results, hydra_results)):
+        print(f"\n  [{i+1}/{len(TEST_CASES)}] {case.name}")
+        print(f"  │  Q: {case.question}")
 
-        h_recalls.append(h_recall)
-        c_recalls.append(c_recall)
-        h_mrrs.append(h_mrr)
-        c_mrrs.append(c_mrr)
+        # Generate AI answers from top-5 chunks
+        h_ai_answer = generate_answer(gemini, case.question, hydra.raw_chunks)
+        c_ai_answer = generate_answer(gemini, case.question, chroma.raw_chunks)
 
-        # Determine winner from recall@5, break ties with MRR
-        if h_recall > c_recall:
+        # Judge both answers
+        h_judgment = judge_answer(gemini, case.question, case.expected, h_ai_answer)
+        c_judgment = judge_answer(gemini, case.question, case.expected, c_ai_answer)
+
+        h_score = h_judgment.get("score", 0)
+        c_score = c_judgment.get("score", 0)
+        h_verdict = h_judgment.get("verdict", "NO")
+        c_verdict = c_judgment.get("verdict", "NO")
+
+        h_scores.append(h_score)
+        c_scores.append(c_score)
+        if h_verdict == "YES":
+            h_yeses += 1
+        if c_verdict == "YES":
+            c_yeses += 1
+
+        # Determine winner from judge score
+        if h_score > c_score:
             winner = "hydra"
-        elif c_recall > h_recall:
-            winner = "chroma"
-        elif h_mrr > c_mrr:
-            winner = "hydra"
-        elif c_mrr > h_mrr:
+        elif c_score > h_score:
             winner = "chroma"
         else:
             winner = "tie"
 
-        print(f"\n  ┌─ [{case.category}] {case.name}")
-        print(f"  │  Q: {case.question}")
-        print(f"  │  Expected: {case.expected}")
-        print(f"  ├─ VectorDB  recall@5={c_recall:.2f}  MRR={c_mrr:.3f}  ({chroma.latency_ms:.1f}ms)")
-        print(f"  ├─ HydraDB   recall@5={h_recall:.2f}  MRR={h_mrr:.3f}  ({hydra.latency_ms:.0f}ms)")
+        # Also compute retrieval metrics
+        h_recall5 = compute_recall_at_k(hydra.raw_chunks, case.gold_keywords, k=5)
+        c_recall5 = compute_recall_at_k(chroma.raw_chunks, case.gold_keywords, k=5)
+        h_recall10 = compute_recall_at_k(hydra.raw_chunks, case.gold_keywords, k=10)
+        c_recall10 = compute_recall_at_k(chroma.raw_chunks, case.gold_keywords, k=10)
+
+        print(f"  ├─ HydraDB:  {h_verdict} ({h_score}/10) — {h_ai_answer[:100]}")
+        print(f"  ├─ ChromaDB: {c_verdict} ({c_score}/10) — {c_ai_answer[:100]}")
         print(f"  └─ Winner: {winner.upper()}")
 
         comparison.append({
@@ -453,37 +580,38 @@ def main():
             "name": case.name,
             "question": case.question,
             "expected": case.expected,
-            "chroma_answer": chroma.answer,
-            "chroma_latency_ms": round(chroma.latency_ms, 1),
-            "chroma_chunks": chroma.chunks_returned,
-            "chroma_error": chroma.error,
-            "chroma_recall_at_5": round(c_recall, 4),
-            "chroma_mrr": round(c_mrr, 4),
-            "hydra_answer": hydra.answer,
+            "hydra_ai_answer": h_ai_answer,
+            "hydra_verdict": h_verdict,
+            "hydra_score": h_score,
+            "hydra_reasoning": h_judgment.get("reasoning", ""),
             "hydra_latency_ms": round(hydra.latency_ms),
             "hydra_chunks": hydra.chunks_returned,
-            "hydra_error": hydra.error,
-            "hydra_recall_at_5": round(h_recall, 4),
-            "hydra_mrr": round(h_mrr, 4),
+            "hydra_recall_at_5": round(h_recall5, 4),
+            "hydra_recall_at_10": round(h_recall10, 4),
+            "chroma_ai_answer": c_ai_answer,
+            "chroma_verdict": c_verdict,
+            "chroma_score": c_score,
+            "chroma_reasoning": c_judgment.get("reasoning", ""),
+            "chroma_latency_ms": round(chroma.latency_ms, 1),
+            "chroma_chunks": chroma.chunks_returned,
+            "chroma_recall_at_5": round(c_recall5, 4),
+            "chroma_recall_at_10": round(c_recall10, 4),
             "winner": winner,
             "why_matters": case.why_matters,
-            "gold_keywords": case.gold_keywords,
         })
 
-    # ── Aggregate metrics ─────────────────────────────────
-    avg_h_recall = sum(h_recalls) / len(h_recalls)
-    avg_c_recall = sum(c_recalls) / len(c_recalls)
-    avg_h_mrr = sum(h_mrrs) / len(h_mrrs)
-    avg_c_mrr = sum(c_mrrs) / len(c_mrrs)
+        time.sleep(0.5)  # Rate limit courtesy
 
+    # ── Aggregate metrics ─────────────────────────────────
     wins_h = sum(1 for c in comparison if c["winner"] == "hydra")
     wins_c = sum(1 for c in comparison if c["winner"] == "chroma")
     ties = sum(1 for c in comparison if c["winner"] == "tie")
 
+    avg_h_score = sum(h_scores) / len(h_scores)
+    avg_c_score = sum(c_scores) / len(c_scores)
+
     c_lats = [r.latency_ms for r in chroma_results]
     h_lats = [r.latency_ms for r in hydra_results]
-    c_errs = sum(1 for r in chroma_results if r.error)
-    h_errs = sum(1 for r in hydra_results if r.error)
 
     summary = {
         "chromadb": {
@@ -491,13 +619,11 @@ def main():
             "p50_latency_ms": round(sorted(c_lats)[len(c_lats) // 2], 1),
             "min_latency_ms": round(min(c_lats), 1),
             "max_latency_ms": round(max(c_lats), 1),
-            "errors": c_errs,
             "total": len(chroma_results),
             "type": "Pure vector (cosine similarity)",
-            "embedding_model": "Standard embeddings",
             "location": "Local (in-memory)",
-            "avg_recall_at_5": round(avg_c_recall, 4),
-            "avg_mrr": round(avg_c_mrr, 4),
+            "avg_score": round(avg_c_score, 2),
+            "yes_count": c_yeses,
             "wins": wins_c,
         },
         "hydradb": {
@@ -505,43 +631,40 @@ def main():
             "p50_latency_ms": round(sorted(h_lats)[len(h_lats) // 2]),
             "min_latency_ms": round(min(h_lats)),
             "max_latency_ms": round(max(h_lats)),
-            "errors": h_errs,
             "total": len(hydra_results),
             "type": "Hybrid (vector + graph + BM25)",
             "location": "Cloud API",
-            "avg_recall_at_5": round(avg_h_recall, 4),
-            "avg_mrr": round(avg_h_mrr, 4),
+            "avg_score": round(avg_h_score, 2),
+            "yes_count": h_yeses,
             "wins": wins_h,
         },
         "ties": ties,
+        "judge_model": "gemini-3-flash-preview",
     }
 
     print(f"\n{'='*70}")
-    print("  RETRIEVAL QUALITY METRICS")
+    print("  LLM-AS-JUDGE RESULTS")
     print(f"{'='*70}")
-    print(f"  {'':25s} {'Recall@5':>10s} {'MRR':>10s} {'Wins':>8s}")
-    print(f"  {'HydraDB (hybrid)':25s} {avg_h_recall:>9.1%} {avg_h_mrr:>9.3f} {wins_h:>6d}/{len(comparison)}")
-    print(f"  {'Vector DB (pure vector)':25s} {avg_c_recall:>9.1%} {avg_c_mrr:>9.3f} {wins_c:>6d}/{len(comparison)}")
-    print(f"  {'Ties':25s} {'':>10s} {'':>10s} {ties:>6d}/{len(comparison)}")
+    print(f"  {'':25s} {'Avg Score':>10s} {'YES':>6s} {'Wins':>8s}")
+    print(f"  {'HydraDB (hybrid)':25s} {avg_h_score:>8.1f}/10 {h_yeses:>5d}/{len(comparison)} {wins_h:>6d}/{len(comparison)}")
+    print(f"  {'ChromaDB (pure vector)':25s} {avg_c_score:>8.1f}/10 {c_yeses:>5d}/{len(comparison)} {wins_c:>6d}/{len(comparison)}")
+    print(f"  {'Ties':25s} {'':>10s} {'':>6s} {ties:>6d}/{len(comparison)}")
 
     print(f"\n{'='*70}")
     print("  LATENCY")
     print(f"{'='*70}")
     print(f"  {'':25s} {'Avg':>10s} {'P50':>10s} {'Min':>10s} {'Max':>10s}")
-    print(f"  {'Vector DB (pure vector)':25s} {summary['chromadb']['avg_latency_ms']:>8.1f}ms {summary['chromadb']['p50_latency_ms']:>8.1f}ms {summary['chromadb']['min_latency_ms']:>8.1f}ms {summary['chromadb']['max_latency_ms']:>8.1f}ms")
-    print(f"  {'HydraDB (hybrid)':25s} {summary['hydradb']['avg_latency_ms']:>8d}ms {summary['hydradb']['p50_latency_ms']:>8d}ms {summary['hydradb']['min_latency_ms']:>8d}ms {summary['hydradb']['max_latency_ms']:>8d}ms")
+    print(f"  {'ChromaDB (local)':25s} {summary['chromadb']['avg_latency_ms']:>8.1f}ms {summary['chromadb']['p50_latency_ms']:>8.1f}ms {summary['chromadb']['min_latency_ms']:>8.1f}ms {summary['chromadb']['max_latency_ms']:>8.1f}ms")
+    print(f"  {'HydraDB (cloud)':25s} {summary['hydradb']['avg_latency_ms']:>8d}ms {summary['hydradb']['p50_latency_ms']:>8d}ms {summary['hydradb']['min_latency_ms']:>8d}ms {summary['hydradb']['max_latency_ms']:>8d}ms")
 
-    print(f"\n  Note: Vector DB runs locally (no network latency).")
-    print(f"  Recall@5 = fraction of required info found in top 5 chunks.")
-    print(f"  MRR = 1/rank of first relevant chunk (higher = better ranking).")
-    print(f"  Both systems got the same {len(TIMELINE_CHUNKS)} memory chunks.")
+    print(f"\n  Judge: Gemini 3 Flash | Both systems got the same {len(pdf_chunks)} memory chunks.")
 
     # ── Save ──────────────────────────────────────────────
     output = {
         "summary": summary,
         "comparison": comparison,
         "data": {
-            "total_chunks_ingested": len(TIMELINE_CHUNKS),
+            "total_chunks_ingested": len(pdf_chunks),
             "test_cases": len(TEST_CASES),
             "categories": list(set(c.category for c in TEST_CASES)),
         },
