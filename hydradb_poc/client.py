@@ -42,9 +42,12 @@ class HydraDBClient:
         return f"{self.base_url}{path}"
 
     def _post(self, path: str, json: dict | None = None, **kwargs) -> dict:
+        kwargs.setdefault("timeout", (10, 30))  # (connect, read)
         resp = self._session.post(self._url(path), json=json, **kwargs)
         resp.raise_for_status()
-        return resp.json()
+        data = resp.json()
+        resp.close()
+        return data
 
     def _get(self, path: str, params: dict | None = None) -> dict:
         resp = self._session.get(self._url(path), params=params)

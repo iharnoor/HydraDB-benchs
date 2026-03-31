@@ -271,11 +271,14 @@ def generate_answer(client, question: str, chunks: list[str]) -> str:
     resp = client.models.generate_content(
         model="gemini-3-flash-preview",
         contents=(
-            f"Based ONLY on these retrieved memories, answer the question in ONE concise sentence. "
-            f"If the memories don't contain the answer, say 'Not found in memories.'\n\n"
+            f"You are given retrieved memory chunks. Answer the question based ONLY on information "
+            f"found in these chunks. Read ALL chunks carefully before answering. "
+            f"Answer in ONE concise sentence. Only say 'Not found in memories' if NONE of the "
+            f"chunks contain ANY relevant information.\n\n"
             f"Question: {question}\n\n"
-            f"Retrieved memories:\n{context}"
+            f"Retrieved memory chunks:\n{context}"
         ),
+        config={"temperature": 0},
     )
     return resp.text.strip()
 
@@ -298,6 +301,7 @@ def judge_answer(client, question: str, expected: str, ai_answer: str) -> dict:
             f"Respond in EXACTLY this JSON format, no other text:\n"
             f'{{"verdict": "YES or NO", "score": <1-10>, "reasoning": "<one sentence>"}}'
         ),
+        config={"temperature": 0},
     )
     text = resp.text.strip()
     # Strip markdown code fences if present
@@ -391,7 +395,7 @@ def run_chroma(chunks: list[str]) -> tuple[list[Result], ChromaClient]:
 
         start = time.time()
         try:
-            hits = client.search(case.question, top_k=10)
+            hits = client.search(case.question, top_k=5)
             latency = (time.time() - start) * 1000
 
             raw_chunks = [h["text"] for h in hits] if hits else []
@@ -452,7 +456,7 @@ def run_hydradb(
         try:
             resp = client.recall_preferences(
                 query=case.question,
-                max_results=10,
+                max_results=5,
                 sub_tenant_id=sub_tenant_id,
                 graph_context=True,
             )
@@ -568,8 +572,6 @@ def main():
         # Also compute retrieval metrics
         h_recall5 = compute_recall_at_k(hydra.raw_chunks, case.gold_keywords, k=5)
         c_recall5 = compute_recall_at_k(chroma.raw_chunks, case.gold_keywords, k=5)
-        h_recall10 = compute_recall_at_k(hydra.raw_chunks, case.gold_keywords, k=10)
-        c_recall10 = compute_recall_at_k(chroma.raw_chunks, case.gold_keywords, k=10)
 
         print(f"  ├─ HydraDB:  {h_verdict} ({h_score}/10) — {h_ai_answer[:100]}")
         print(f"  ├─ ChromaDB: {c_verdict} ({c_score}/10) — {c_ai_answer[:100]}")
@@ -586,16 +588,16 @@ def main():
             "hydra_reasoning": h_judgment.get("reasoning", ""),
             "hydra_latency_ms": round(hydra.latency_ms),
             "hydra_chunks": hydra.chunks_returned,
+            "hydra_raw_chunks": hydra.raw_chunks,
             "hydra_recall_at_5": round(h_recall5, 4),
-            "hydra_recall_at_10": round(h_recall10, 4),
             "chroma_ai_answer": c_ai_answer,
             "chroma_verdict": c_verdict,
             "chroma_score": c_score,
             "chroma_reasoning": c_judgment.get("reasoning", ""),
             "chroma_latency_ms": round(chroma.latency_ms, 1),
             "chroma_chunks": chroma.chunks_returned,
+            "chroma_raw_chunks": chroma.raw_chunks,
             "chroma_recall_at_5": round(c_recall5, 4),
-            "chroma_recall_at_10": round(c_recall10, 4),
             "winner": winner,
             "why_matters": case.why_matters,
         })
